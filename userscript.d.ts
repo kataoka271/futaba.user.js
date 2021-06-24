@@ -1,0 +1,1 @@
+declare var exportFunction: (func: function, targetScope: object, option?: object) => function;
