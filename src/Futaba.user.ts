@@ -53,7 +53,7 @@
     GM_deleteValue("update");
   });
 
-  function onCatMode(domain: string) {
+  const onCatMode = (domain: string) => {
     GM_addStyle(`\
 .resnum { margin-left: 2px; font-size: 70%; }
 td.resup .resnum { color: #F02020; }
@@ -193,73 +193,76 @@ td.thrnew { background-color: #FCE0D6; }
         this._timer = { set: false };
       }
 
-      execute(input: HTMLInputElement, cat: Catalog) {
+      execute(value: string, cat: Catalog) {
         if (this._timer.set) {
           clearTimeout(this._timer.id);
           this._timer.set = false;
         }
         if (Date.now() - this._inputTime > this._inputTimeout) {
           this._pickup.clear();
-          if (input.value) {
-            this._pickup.append(findItemsText(input.value));
+          if (value) {
+            this._pickup.append(findItemsText(value));
           } else {
             this._pickup.append(findItemsHist(cat));
           }
         } else {
-          this._timer.id = setTimeout(this.execute, this._inputTimeout, cat);
+          this._timer.id = setTimeout(this.execute, this._inputTimeout, value, cat);
           this._timer.set = true;
         }
         this._inputTime = Date.now();
       }
     }
 
-    let oldcat: Catalog = loadCatalog();
-    let cat: Catalog = {};
-    const pickup = new PickupTable();
-    const finder = new IncrementalFinder(pickup);
-    const input = $('<input type="search" placeholder="Search ...">').on("input", function () {
-      if (!(this instanceof HTMLInputElement)) {
-        return;
-      }
-      finder.execute(this, cat);
-    });
+    const initialize = () => {
+      let oldcat: Catalog = loadCatalog();
+      let cat: Catalog = {};
+      const pickup = new PickupTable();
+      const finder = new IncrementalFinder(pickup);
+      const input = $('<input type="search" placeholder="Search ...">').on("input", function () {
+        if (!(this instanceof HTMLInputElement)) {
+          return;
+        }
+        finder.execute(this.value, cat);
+      });
 
-    $("table#cattable")
-      .before($("<p>"))
-      .before($('<div style="text-align:center">').append(input))
-      .before($("<p>"))
-      .before(pickup.table())
-      .before($("<p>"));
+      $("table#cattable")
+        .before($("<p>"))
+        .before($('<div style="text-align:center">').append(input))
+        .before($("<p>"))
+        .before(pickup.table())
+        .before($("<p>"));
 
-    cat = makeupTable(oldcat);
-    pickup.clear();
-    pickup.append(findItemsHist(cat));
+      cat = makeupTable(oldcat);
+      pickup.clear();
+      pickup.append(findItemsHist(cat));
 
-    $(window).on("unload", () => {
-      saveCatalog(cat);
-    });
+      $(window).on("unload", () => {
+        saveCatalog(cat);
+      });
 
-    $(window).on("keydown", (e) => {
-      if (e.key === "r") {
-        $("table#cattable").load(location.href + " #cattable > tbody", () => {
+      $(window).on("keydown", (e) => {
+        if (e.key === "r") {
+          $("table#cattable").load(location.href + " #cattable > tbody", () => {
+            saveCatalog(cat);
+            oldcat = cat;
+            cat = makeupTable(oldcat);
+            pickup.clear();
+            pickup.append(findItemsHist(cat));
+          });
+        }
+      });
+
+      setInterval(() => {
+        if (readUpdate() === "1") {
           oldcat = loadCatalog();
           cat = makeupTable(oldcat);
           pickup.clear();
           pickup.append(findItemsHist(cat));
-          saveCatalog(cat);
-        });
-      }
-    });
+        }
+      }, 2000);
+    };
 
-    setInterval(() => {
-      const update: string = readUpdate();
-      if (update === "1") {
-        oldcat = loadCatalog();
-        cat = makeupTable(oldcat);
-        pickup.clear();
-        pickup.append(findItemsHist(cat));
-      }
-    }, 2000);
+    initialize();
   }
 
   const onResMode = (domain: string) => {
