@@ -33,6 +33,21 @@
     }
   };
 
+  const loadCatalog = (): Catalog => {
+    return JSON.parse(GM_getValue("cat", "{}"));
+  };
+
+  const saveCatalog = (cat: Catalog, update?: string) => {
+    GM_setValue("cat", JSON.stringify(cat));
+    GM_setValue("update", update ?? "0");
+  };
+
+  const readUpdate = (): string => {
+    const update = GM_getValue("update", "0");
+    GM_setValue("update", "0");
+    return update;
+  };
+
   GM_registerMenuCommand("履歴削除", () => {
     GM_deleteValue("cat");
     GM_deleteValue("update");
@@ -198,7 +213,7 @@ td.thrnew { background-color: #FCE0D6; }
       }
     }
 
-    let oldcat: Catalog = JSON.parse(GM_getValue("cat", "{}"));
+    let oldcat: Catalog = loadCatalog();
     let cat: Catalog = {};
     const pickup = new PickupTable();
     const finder = new IncrementalFinder(pickup);
@@ -221,30 +236,28 @@ td.thrnew { background-color: #FCE0D6; }
     pickup.append(findItemsHist(cat));
 
     $(window).on("unload", () => {
-      GM_setValue("cat", JSON.stringify(cat));
+      saveCatalog(cat);
     });
 
     $(window).on("keydown", (e) => {
       if (e.key === "r") {
         $("table#cattable").load(location.href + " #cattable > tbody", () => {
-          oldcat = JSON.parse(GM_getValue("cat", "{}"));
+          oldcat = loadCatalog();
           cat = makeupTable(oldcat);
           pickup.clear();
           pickup.append(findItemsHist(cat));
-          GM_setValue("cat", JSON.stringify(cat));
-          GM_setValue("update", "0");
+          saveCatalog(cat);
         });
       }
     });
 
     setInterval(() => {
-      const update: string = GM_getValue("update");
+      const update: string = readUpdate();
       if (update === "1") {
-        oldcat = JSON.parse(GM_getValue("cat", "{}"));
+        oldcat = loadCatalog();
         cat = makeupTable(oldcat);
         pickup.clear();
         pickup.append(findItemsHist(cat));
-        GM_setValue("update", "0");
       }
     }, 2000);
   }
@@ -264,12 +277,13 @@ td.thrnew { background-color: #FCE0D6; }
       return;
     }
 
-    const cat: Catalog = JSON.parse(GM_getValue("cat", "{}"));
+    const cat: Catalog = loadCatalog();
     const res = $("div.thre > table > tbody > tr > td.rtd");
 
     if (cat[key] != null) {
       cat[key].res = res.length;
       cat[key].updateTime = Date.now();
+      cat[key].offset = 0;
     } else {
       cat[key] = {
         href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
@@ -287,22 +301,19 @@ td.thrnew { background-color: #FCE0D6; }
     }
     cat[key].readres = res.length;
 
-    console.log(cat[key].offset);
-    window.scrollTo(0, cat[key].offset ?? 0);
+    window.scrollTo(0, cat[key].offset);
 
     $(window).on("scroll", () => {
       cat[key].offset = window.scrollY;
     });
 
     $(window).on("unload", () => {
-      const newcat: Catalog = JSON.parse(GM_getValue("cat", "{}"));
+      const newcat: Catalog = loadCatalog();
       newcat[key] = cat[key];
-      GM_setValue("cat", JSON.stringify(newcat));
-      GM_setValue("update", "1");
+      saveCatalog(newcat, "1");
     });
 
-    GM_setValue("cat", JSON.stringify(cat));
-    GM_setValue("update", "1");
+    saveCatalog(cat, "1");
   };
 
   const mo = /^https?:\/\/(\w+)\./.exec(location.href);
