@@ -64,7 +64,7 @@ td.reseq { background-color: #CCCCCC; }
 td.thrnew { background-color: #FCE0D6; }
 `);
 
-    class PickupTable {
+    class ResultView {
       _table: JQuery<HTMLElement>;
       _tbody: JQuery<HTMLElement>;
       _tr: JQuery<HTMLElement>;
@@ -154,7 +154,7 @@ td.thrnew { background-color: #FCE0D6; }
           elem = $('<span class="resnum">');
           $("font", this).after(elem);
         }
-        $(this).removeClass("resup resdown reseq thrnew");
+        $(this).removeClass("resup reseq thrnew");
         if (oldcat[key] != null) {
           if (oldcat[key].readres >= 0) {
             const resDiff = item.res - oldcat[key].readres;
@@ -162,8 +162,9 @@ td.thrnew { background-color: #FCE0D6; }
               elem.text("+" + resDiff);
               $(this).addClass("resup");
             } else if (resDiff < 0) {
-              elem.text(resDiff);
-              $(this).addClass("resdown");
+              cat[key].res = oldcat[key].readres;
+              elem.text("");
+              $(this).addClass("reseq");
             } else {
               elem.text("");
               $(this).addClass("reseq");
@@ -181,89 +182,105 @@ td.thrnew { background-color: #FCE0D6; }
       return cat;
     };
 
-    class IncrementalFinder {
+    class Protect {
+      _inputTimeout: number;
       _inputTime: number;
-      _inputTimeout: number = 100;
       _timer: { set: boolean; id?: number };
-      _pickup: PickupTable;
 
-      constructor(pickup: PickupTable) {
+      constructor(timeout: number) {
+        this._inputTimeout = timeout;
         this._inputTime = Date.now();
-        this._pickup = pickup;
         this._timer = { set: false };
       }
 
-      execute(value: string, cat: Catalog) {
+      execute(func: () => void) {
         if (this._timer.set) {
           clearTimeout(this._timer.id);
           this._timer.set = false;
         }
         if (Date.now() - this._inputTime > this._inputTimeout) {
-          this._pickup.clear();
-          if (value) {
-            this._pickup.append(findItemsText(value));
-          } else {
-            this._pickup.append(findItemsHist(cat));
-          }
+          func();
         } else {
-          this._timer.id = setTimeout(this.execute, this._inputTimeout, value, cat);
+          this._timer.id = setTimeout(() => { this.execute(func); }, this._inputTimeout);
           this._timer.set = true;
         }
         this._inputTime = Date.now();
       }
     }
 
-    const initialize = () => {
-      let oldcat: Catalog = loadCatalog();
-      let cat: Catalog = {};
-      const pickup = new PickupTable();
-      const finder = new IncrementalFinder(pickup);
-      const input = $('<input type="search" placeholder="Search ...">').on("input", function () {
-        if (!(this instanceof HTMLInputElement)) {
-          return;
+    class CatTable {
+      _input: JQuery<HTMLElement>;
+      _result: ResultView;
+      _cat: Catalog;
+      _oldcat: Catalog;
+      _protect: Protect;
+
+      constructor(input: JQuery<HTMLElement>, result: ResultView) {
+        this._input = input;
+        this._result = result;
+        this._cat = {};
+        this._oldcat = {};
+        this._protect = new Protect(500);
+        this._input.on("input", () => {
+          this._protect.execute(() => {
+            this.update();
+          });
+        });
+      }
+
+      update() {
+        this._oldcat = loadCatalog();
+        this._cat = makeupTable(this._oldcat);
+        this._result.clear();
+        const keyword = this._input.val();
+        if (typeof keyword === "string" && keyword !== "") {
+          this._result.append(findItemsText(keyword));
+        } else {
+          this._result.append(findItemsHist(this._cat));
         }
-        finder.execute(this.value, cat);
-      });
+      }
+
+      save() {
+        saveCatalog(this._cat);
+      }
+    }
+
+    const initialize = () => {
+      const input = $('<input type="search" placeholder="Search ...">');
+      const result = new ResultView();
+      const table = new CatTable(input, result);
 
       $("table#cattable")
         .before($("<p>"))
         .before($('<div style="text-align:center">').append(input))
         .before($("<p>"))
-        .before(pickup.table())
+        .before(result.table())
         .before($("<p>"));
 
-      cat = makeupTable(oldcat);
-      pickup.clear();
-      pickup.append(findItemsHist(cat));
+      table.update();
 
       $(window).on("unload", () => {
-        saveCatalog(cat);
+        table.save();
       });
 
       $(window).on("keydown", (e) => {
         if (e.key === "r") {
           $("table#cattable").load(location.href + " #cattable > tbody", () => {
-            saveCatalog(cat);
-            oldcat = cat;
-            cat = makeupTable(oldcat);
-            pickup.clear();
-            pickup.append(findItemsHist(cat));
+            table.save();
+            table.update();
           });
         }
       });
 
       setInterval(() => {
         if (readUpdate() === "1") {
-          oldcat = loadCatalog();
-          cat = makeupTable(oldcat);
-          pickup.clear();
-          pickup.append(findItemsHist(cat));
+          table.update();
         }
       }, 2000);
     };
 
     initialize();
-  }
+  };
 
   const onResMode = (domain: string) => {
     GM_addStyle(`\
@@ -274,12 +291,10 @@ td.thrnew { background-color: #FCE0D6; }
     if (root.length === 0) {
       return; // thread is dead
     }
-
     const key = getKey(domain, location.href);
     if (key == null) {
       return;
     }
-
     const cat: Catalog = loadCatalog();
     const res = $("div.thre > table > tbody > tr > td.rtd");
 

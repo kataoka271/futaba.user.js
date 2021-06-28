@@ -20,11 +20,23 @@
             return domain + "#" + mo[1];
         }
     };
+    const loadCatalog = () => {
+        return JSON.parse(GM_getValue("cat", "{}"));
+    };
+    const saveCatalog = (cat, update) => {
+        GM_setValue("cat", JSON.stringify(cat));
+        GM_setValue("update", update !== null && update !== void 0 ? update : "0");
+    };
+    const readUpdate = () => {
+        const update = GM_getValue("update", "0");
+        GM_setValue("update", "0");
+        return update;
+    };
     GM_registerMenuCommand("履歴削除", () => {
         GM_deleteValue("cat");
         GM_deleteValue("update");
     });
-    function onCatMode(domain) {
+    const onCatMode = (domain) => {
         GM_addStyle(`\
 .resnum { margin-left: 2px; font-size: 70%; }
 td.resup .resnum { color: #F02020; }
@@ -34,7 +46,7 @@ td.resdown { background-color: #CCCCCC; }
 td.reseq { background-color: #CCCCCC; }
 td.thrnew { background-color: #FCE0D6; }
 `);
-        class PickupTable {
+        class ResultView {
             constructor() {
                 this._table = $('<table border="1" align="center">').css("display", "none");
                 this._tbody = $("<tbody>").appendTo(this._table);
@@ -116,7 +128,7 @@ td.thrnew { background-color: #FCE0D6; }
                     elem = $('<span class="resnum">');
                     $("font", this).after(elem);
                 }
-                $(this).removeClass("resup resdown reseq thrnew");
+                $(this).removeClass("resup reseq thrnew");
                 if (oldcat[key] != null) {
                     if (oldcat[key].readres >= 0) {
                         const resDiff = item.res - oldcat[key].readres;
@@ -125,8 +137,9 @@ td.thrnew { background-color: #FCE0D6; }
                             $(this).addClass("resup");
                         }
                         else if (resDiff < 0) {
-                            elem.text(resDiff);
-                            $(this).addClass("resdown");
+                            cat[key].res = oldcat[key].readres;
+                            elem.text("");
+                            $(this).addClass("reseq");
                         }
                         else {
                             elem.text("");
@@ -146,81 +159,87 @@ td.thrnew { background-color: #FCE0D6; }
             });
             return cat;
         };
-        class IncrementalFinder {
-            constructor(pickup) {
-                this._inputTimeout = 100;
+        class Protect {
+            constructor(timeout) {
+                this._inputTimeout = timeout;
                 this._inputTime = Date.now();
-                this._pickup = pickup;
                 this._timer = { set: false };
             }
-            execute(input, cat) {
+            execute(func) {
                 if (this._timer.set) {
                     clearTimeout(this._timer.id);
                     this._timer.set = false;
                 }
                 if (Date.now() - this._inputTime > this._inputTimeout) {
-                    this._pickup.clear();
-                    if (input.value) {
-                        this._pickup.append(findItemsText(input.value));
-                    }
-                    else {
-                        this._pickup.append(findItemsHist(cat));
-                    }
+                    func();
                 }
                 else {
-                    this._timer.id = setTimeout(this.execute, this._inputTimeout, cat);
+                    this._timer.id = setTimeout(() => { this.execute(func); }, this._inputTimeout);
                     this._timer.set = true;
                 }
                 this._inputTime = Date.now();
             }
         }
-        let oldcat = JSON.parse(GM_getValue("cat", "{}"));
-        let cat = {};
-        const pickup = new PickupTable();
-        const finder = new IncrementalFinder(pickup);
-        const input = $('<input type="search" placeholder="Search ...">').on("input", function () {
-            if (!(this instanceof HTMLInputElement)) {
-                return;
-            }
-            finder.execute(this, cat);
-        });
-        $("table#cattable")
-            .before($("<p>"))
-            .before($('<div style="text-align:center">').append(input))
-            .before($("<p>"))
-            .before(pickup.table())
-            .before($("<p>"));
-        cat = makeupTable(oldcat);
-        pickup.clear();
-        pickup.append(findItemsHist(cat));
-        $(window).on("unload", () => {
-            GM_setValue("cat", JSON.stringify(cat));
-        });
-        $(window).on("keydown", (e) => {
-            if (e.key === "r") {
-                $("table#cattable").load(location.href + " #cattable > tbody", () => {
-                    oldcat = JSON.parse(GM_getValue("cat", "{}"));
-                    cat = makeupTable(oldcat);
-                    pickup.clear();
-                    pickup.append(findItemsHist(cat));
-                    GM_setValue("cat", JSON.stringify(cat));
-                    GM_setValue("update", "0");
+        class CatTable {
+            constructor(input, result) {
+                this._input = input;
+                this._result = result;
+                this._cat = {};
+                this._oldcat = {};
+                this._protect = new Protect(500);
+                this._input.on("input", () => {
+                    this._protect.execute(() => {
+                        this.update();
+                    });
                 });
             }
-        });
-        setInterval(() => {
-            const update = GM_getValue("update");
-            if (update === "1") {
-                oldcat = JSON.parse(GM_getValue("cat", "{}"));
-                cat = makeupTable(oldcat);
-                pickup.clear();
-                pickup.append(findItemsHist(cat));
-                GM_setValue("update", "0");
+            update() {
+                this._oldcat = loadCatalog();
+                this._cat = makeupTable(this._oldcat);
+                this._result.clear();
+                const keyword = this._input.val();
+                if (typeof keyword === "string" && keyword !== "") {
+                    this._result.append(findItemsText(keyword));
+                }
+                else {
+                    this._result.append(findItemsHist(this._cat));
+                }
             }
-        }, 2000);
-    }
+            save() {
+                saveCatalog(this._cat);
+            }
+        }
+        const initialize = () => {
+            const input = $('<input type="search" placeholder="Search ...">');
+            const result = new ResultView();
+            const table = new CatTable(input, result);
+            $("table#cattable")
+                .before($("<p>"))
+                .before($('<div style="text-align:center">').append(input))
+                .before($("<p>"))
+                .before(result.table())
+                .before($("<p>"));
+            table.update();
+            $(window).on("unload", () => {
+                table.save();
+            });
+            $(window).on("keydown", (e) => {
+                if (e.key === "r") {
+                    $("table#cattable").load(location.href + " #cattable > tbody", () => {
+                        table.save();
+                        table.update();
+                    });
+                }
+            });
+            setInterval(() => {
+                if (readUpdate() === "1") {
+                    table.update();
+                }
+            }, 2000);
+        };
+        initialize();
+    };
     const onResMode = (domain) => {
-        var _a;
         GM_addStyle(`\
 .rtd.resnew { background-color: #FCE0D6; }
 `);
@@ -232,11 +251,12 @@ td.thrnew { background-color: #FCE0D6; }
         if (key == null) {
             return;
         }
-        const cat = JSON.parse(GM_getValue("cat", "{}"));
+        const cat = loadCatalog();
         const res = $("div.thre > table > tbody > tr > td.rtd");
         if (cat[key] != null) {
             cat[key].res = res.length;
             cat[key].updateTime = Date.now();
+            cat[key].offset = 0;
         }
         else {
             cat[key] = {
@@ -253,19 +273,16 @@ td.thrnew { background-color: #FCE0D6; }
             res.slice(cat[key].readres).addClass("resnew");
         }
         cat[key].readres = res.length;
-        console.log(cat[key].offset);
-        window.scrollTo(0, (_a = cat[key].offset) !== null && _a !== void 0 ? _a : 0);
+        window.scrollTo(0, cat[key].offset);
         $(window).on("scroll", () => {
             cat[key].offset = window.scrollY;
         });
         $(window).on("unload", () => {
-            const newcat = JSON.parse(GM_getValue("cat", "{}"));
+            const newcat = loadCatalog();
             newcat[key] = cat[key];
-            GM_setValue("cat", JSON.stringify(newcat));
-            GM_setValue("update", "1");
+            saveCatalog(newcat, "1");
         });
-        GM_setValue("cat", JSON.stringify(cat));
-        GM_setValue("update", "1");
+        saveCatalog(cat, "1");
     };
     const mo = /^https?:\/\/(\w+)\./.exec(location.href);
     const domain = mo == null ? "" : mo[1];
