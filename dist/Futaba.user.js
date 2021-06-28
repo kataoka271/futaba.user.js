@@ -242,6 +242,7 @@ td.thrnew { background-color: #FCE0D6; }
     const onResMode = (domain) => {
         GM_addStyle(`\
 .rtd.resnew { background-color: #FCE0D6; }
+#commands { position: fixed; bottom: 5px; right: 5px; background-color: #F0E0D6; }
 `);
         const root = $("div.thre");
         if (root.length === 0) {
@@ -283,6 +284,35 @@ td.thrnew { background-color: #FCE0D6; }
             saveCatalog(newcat, "1");
         });
         saveCatalog(cat, "1");
+        const hasImage = (td) => {
+            return $("img", td).length > 0;
+        };
+        const resTable = (td) => {
+            return td.parent().parent().parent();
+        };
+        $("body").append($("<div id='commands'>").append($("<a>")
+            .text("画像")
+            .on("click", (e) => {
+            if (e.target.textContent == "画像") {
+                resTable(res.filter((i, e) => !hasImage(e))).css("display", "none");
+                e.target.textContent = "全レス";
+            }
+            else {
+                resTable(res.filter((i, e) => !hasImage(e))).css("display", "");
+                e.target.textContent = "画像";
+            }
+        }), $("<a>")
+            .text("新規")
+            .on("click", (e) => {
+            if (e.target.textContent == "新規") {
+                resTable(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
+                e.target.textContent = "全レス";
+            }
+            else {
+                resTable(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
+                e.target.textContent = "新規";
+            }
+        })));
     };
     const mo = /^https?:\/\/(\w+)\./.exec(location.href);
     const domain = mo == null ? "" : mo[1];
