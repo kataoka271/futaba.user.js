@@ -232,6 +232,7 @@ td.thrnew { background-color: #FCE0D6; }
       update() {
         this._oldcat = loadCatalog();
         this._cat = makeupTable(this._oldcat);
+        this._result.table().hide();
         this._result.clear();
         const keyword = this._input.val();
         if (typeof keyword === "string" && keyword !== "") {
@@ -239,6 +240,7 @@ td.thrnew { background-color: #FCE0D6; }
         } else {
           this._result.append(findItemsHist(this._cat));
         }
+        this._result.table().show();
       }
 
       save() {
