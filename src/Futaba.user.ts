@@ -83,6 +83,54 @@ td.thrnew { background-color: #FCE0D6; }
       });
     };
 
+    const updateCat = (td: HTMLElement, cat: Catalog, oldcat: Catalog) => {
+      const href = $("a", td).attr("href");
+      if (href == null) {
+        return;
+      }
+      const key = getKey(domain, href);
+      if (key == null) {
+        return;
+      }
+      cat[key] = {
+        href: href,
+        res: parseInt($("font", td).text()),
+        readres: cat[key]?.readres ?? -1,
+        title: $("small", td).text(),
+        updateTime: Date.now(),
+        offset: cat[key]?.offset ?? 0,
+      };
+      let resnum = $("span.resnum", td).first();
+      if (resnum.length === 0) {
+        resnum = $('<span class="resnum">');
+        $("font", td).after(resnum);
+      }
+      $(td).removeClass("resup reseq thrnew");
+      if (oldcat[key] != null) {
+        if (oldcat[key].readres >= 0) {
+          const resDiff = cat[key].res - oldcat[key].readres;
+          if (resDiff > 0) {
+            resnum.text("+" + resDiff);
+            $(td).addClass("resup");
+          } else if (resDiff < 0) {
+            cat[key].res = oldcat[key].readres;
+            resnum.text("");
+            $(td).addClass("reseq");
+          } else {
+            resnum.text("");
+            $(td).addClass("reseq");
+          }
+        } else {
+          // No update
+          resnum.text("");
+        }
+      } else {
+        // NEW
+        resnum.text("");
+        $(td).addClass("thrnew");
+      }
+    };
+
     const makeupTable = (oldcat: Catalog): Catalog => {
       const expireTime = 259200000; // 3days
       const now = Date.now();
@@ -93,53 +141,7 @@ td.thrnew { background-color: #FCE0D6; }
           cat[key] = item;
         }
       }
-      $("table#cattable td").each(function () {
-        const href = $("a", this).attr("href");
-        if (href == null) {
-          return;
-        }
-        const key = getKey(domain, href);
-        if (key == null) {
-          return;
-        }
-        cat[key] = {
-          href: href,
-          res: parseInt($("font", this).text()),
-          readres: cat[key]?.readres ?? -1,
-          title: $("small", this).text(),
-          updateTime: Date.now(),
-          offset: cat[key]?.offset ?? 0,
-        };
-        let resnum = $("span.resnum", this).first();
-        if (resnum.length === 0) {
-          resnum = $('<span class="resnum">');
-          $("font", this).after(resnum);
-        }
-        $(this).removeClass("resup reseq thrnew");
-        if (oldcat[key] != null) {
-          if (oldcat[key].readres >= 0) {
-            const resDiff = cat[key].res - oldcat[key].readres;
-            if (resDiff > 0) {
-              resnum.text("+" + resDiff);
-              $(this).addClass("resup");
-            } else if (resDiff < 0) {
-              cat[key].res = oldcat[key].readres;
-              resnum.text("");
-              $(this).addClass("reseq");
-            } else {
-              resnum.text("");
-              $(this).addClass("reseq");
-            }
-          } else {
-            // No update
-            resnum.text("");
-          }
-        } else {
-          // NEW
-          resnum.text("");
-          $(this).addClass("thrnew");
-        }
-      });
+      $("table#cattable td").each(function () { updateCat(this, cat, oldcat); });
       return cat;
     };
 
