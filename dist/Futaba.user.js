@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.1
+// @version      0.0.2
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -46,35 +46,6 @@ td.resdown { background-color: #CCCCCC; }
 td.reseq { background-color: #CCCCCC; }
 td.thrnew { background-color: #FCE0D6; }
 `);
-        class ResultView {
-            constructor() {
-                this._table = $('<table border="1" align="center">').css("display", "none");
-                this._tbody = $("<tbody>").appendTo(this._table);
-                this._tr = $("<tr>").appendTo(this._tbody);
-                this._count = 0;
-            }
-            append(elems) {
-                elems.each((i, e) => {
-                    if (this._count === 0) {
-                        this._table.css("display", "");
-                    }
-                    this._count += 1;
-                    if (this._count % 8 === 0) {
-                        this._tr = $("<tr>").appendTo(this._tbody);
-                    }
-                    this._tr.append($(e).clone(true));
-                });
-            }
-            clear() {
-                this._table.css("display", "none");
-                this._tbody.empty();
-                this._tr = $("<tr>").appendTo(this._tbody);
-                this._count = 0;
-            }
-            table() {
-                return this._table;
-            }
-        }
         const findItemsText = (text) => {
             return $("table#cattable td").filter((i, e) => {
                 var _a, _b;
@@ -114,7 +85,7 @@ td.thrnew { background-color: #FCE0D6; }
                 if (key == null) {
                     return;
                 }
-                const item = {
+                cat[key] = {
                     href: href,
                     res: parseInt($("font", this).text()),
                     readres: (_b = (_a = cat[key]) === null || _a === void 0 ? void 0 : _a.readres) !== null && _b !== void 0 ? _b : -1,
@@ -122,43 +93,71 @@ td.thrnew { background-color: #FCE0D6; }
                     updateTime: Date.now(),
                     offset: (_d = (_c = cat[key]) === null || _c === void 0 ? void 0 : _c.offset) !== null && _d !== void 0 ? _d : 0,
                 };
-                cat[key] = item;
-                let elem = $("span.resnum", this).first();
-                if (elem.length === 0) {
-                    elem = $('<span class="resnum">');
-                    $("font", this).after(elem);
+                let resnum = $("span.resnum", this).first();
+                if (resnum.length === 0) {
+                    resnum = $('<span class="resnum">');
+                    $("font", this).after(resnum);
                 }
                 $(this).removeClass("resup reseq thrnew");
                 if (oldcat[key] != null) {
                     if (oldcat[key].readres >= 0) {
-                        const resDiff = item.res - oldcat[key].readres;
+                        const resDiff = cat[key].res - oldcat[key].readres;
                         if (resDiff > 0) {
-                            elem.text("+" + resDiff);
+                            resnum.text("+" + resDiff);
                             $(this).addClass("resup");
                         }
                         else if (resDiff < 0) {
                             cat[key].res = oldcat[key].readres;
-                            elem.text("");
+                            resnum.text("");
                             $(this).addClass("reseq");
                         }
                         else {
-                            elem.text("");
+                            resnum.text("");
                             $(this).addClass("reseq");
                         }
                     }
                     else {
                         // No update
-                        elem.text("");
+                        resnum.text("");
                     }
                 }
                 else {
                     // NEW
-                    elem.text("");
+                    resnum.text("");
                     $(this).addClass("thrnew");
                 }
             });
             return cat;
         };
+        class FindResult {
+            constructor() {
+                this._table = $('<table border="1" align="center">').css("display", "none");
+                this._tbody = $("<tbody>").appendTo(this._table);
+                this._tr = $("<tr>").appendTo(this._tbody);
+                this._count = 0;
+            }
+            append(elems) {
+                elems.each((i, e) => {
+                    if (this._count === 0) {
+                        this._table.css("display", "");
+                    }
+                    this._count += 1;
+                    if (this._count % 8 === 0) {
+                        this._tr = $("<tr>").appendTo(this._tbody);
+                    }
+                    this._tr.append($(e).clone(true));
+                });
+            }
+            clear() {
+                this._table.css("display", "none");
+                this._tbody.empty();
+                this._tr = $("<tr>").appendTo(this._tbody);
+                this._count = 0;
+            }
+            table() {
+                return this._table;
+            }
+        }
         class Protect {
             constructor(timeout) {
                 this._inputTimeout = timeout;
@@ -211,7 +210,7 @@ td.thrnew { background-color: #FCE0D6; }
         }
         const initialize = () => {
             const input = $('<input type="search" placeholder="Search ...">');
-            const result = new ResultView();
+            const result = new FindResult();
             const table = new CatTable(input, result);
             $("table#cattable")
                 .before($("<p>"))
