@@ -243,8 +243,39 @@ td.thrnew { background-color: #FCE0D6; }
     };
     const onResMode = (domain) => {
         GM_addStyle(`\
-.rtd.resnew { background-color: #FCE0D6; }
-#commands { position: fixed; bottom: 5px; right: 5px; background-color: #F0E0D6; }
+.rtd.resnew {
+  background-color: #FCE0D6;
+}
+#commands {
+  position: fixed;
+  bottom: 5px;
+  right: 5px;
+}
+#commands a {
+  background-color: rgb(200, 200, 200);
+  border: 2px outset rgb(200, 200, 200);
+  color: rgb(100, 100, 100);
+  font-size: 100%;
+  padding: 0 0.5em;
+  cursor: pointer;
+}
+#commands a:hover {
+  color: rgb(200, 0, 0);
+}
+#commands a:first-child {
+  border-radius: 5px / 20% 0 0 20%;
+}
+#commands a:last-child {
+  border-radius: 5px / 0 20% 20% 0;
+}
+#commands a.enable {
+  background-color: rgb(150, 150, 150);
+  border-style: inset;
+  color: rgb(200, 0, 0);
+}
+#commands a.enable:hover {
+  color: rgb(100, 100, 100);
+}
 `);
         const root = $("div.thre");
         if (root.length === 0) {
@@ -259,7 +290,6 @@ td.thrnew { background-color: #FCE0D6; }
         if (cat[key] != null) {
             cat[key].res = res.length;
             cat[key].updateTime = Date.now();
-            cat[key].offset = 0;
         }
         else {
             cat[key] = {
@@ -289,30 +319,28 @@ td.thrnew { background-color: #FCE0D6; }
         const hasImage = (td) => {
             return $("img", td).length > 0;
         };
-        const resTable = (td) => {
+        const ancestor = (td) => {
             return td.parent().parent().parent();
         };
         $("body").append($("<div id='commands'>").append($("<a>")
             .text("画像")
             .on("click", (e) => {
-            if (e.target.textContent == "画像") {
-                resTable(res.filter((i, e) => !hasImage(e))).css("display", "none");
-                e.target.textContent = "全レス";
+            e.preventDefault();
+            if ($(e.target).toggleClass("enable").is(".enable")) {
+                ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !hasImage(e))).css("display", "none");
             }
             else {
-                resTable(res.filter((i, e) => !hasImage(e))).css("display", "");
-                e.target.textContent = "画像";
+                ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !hasImage(e))).css("display", "");
             }
         }), $("<a>")
-            .text("新規")
+            .text("新着")
             .on("click", (e) => {
-            if (e.target.textContent == "新規") {
-                resTable(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
-                e.target.textContent = "全レス";
+            e.preventDefault();
+            if ($(e.target).toggleClass("enable").is(".enable")) {
+                ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
             }
             else {
-                resTable(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
-                e.target.textContent = "新規";
+                ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
             }
         })));
     };
