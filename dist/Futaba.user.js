@@ -252,16 +252,17 @@ td.thrnew { background-color: #FCE0D6; }
 }
 #commands {
   position: fixed;
-  bottom: 5px;
-  right: 5px;
+  bottom: 10px;
+  right: 10px;
 }
 #commands a {
   background-color: rgb(200, 200, 200);
   border: 2px outset rgb(200, 200, 200);
   color: rgb(100, 100, 100);
   font-size: 100%;
-  padding: 0 0.5em;
+  padding: 0.2em 0.85em;
   cursor: pointer;
+  display: inline-block;
 }
 #commands a:hover {
   color: rgb(200, 0, 0);
