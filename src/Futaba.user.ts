@@ -141,7 +141,9 @@ td.thrnew { background-color: #FCE0D6; }
           cat[key] = item;
         }
       }
-      $("table#cattable td").each(function () { updateCat(this, cat, oldcat); });
+      $("table#cattable td").each(function () {
+        updateCat(this, cat, oldcat);
+      });
       return cat;
     };
 
@@ -202,7 +204,9 @@ td.thrnew { background-color: #FCE0D6; }
         if (Date.now() - this._inputTime > this._inputTimeout) {
           func();
         } else {
-          this._timer.id = setTimeout(() => { this.execute(func); }, this._inputTimeout);
+          this._timer.id = setTimeout(() => {
+            this.execute(func);
+          }, this._inputTimeout);
           this._timer.set = true;
         }
         this._inputTime = Date.now();
@@ -381,9 +385,11 @@ td.thrnew { background-color: #FCE0D6; }
           .on("click", (e) => {
             e.preventDefault();
             if ($(e.target).toggleClass("enable").is(".enable")) {
-              ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !hasImage(e))).css("display", "none");
+              const res = $("div.thre > table > tbody > tr > td.rtd");
+              ancestor(res.filter((i, e) => !hasImage(e))).css("display", "none");
             } else {
-              ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !hasImage(e))).css("display", "");
+              const res = $("div.thre > table > tbody > tr > td.rtd");
+              ancestor(res.filter((i, e) => !hasImage(e))).css("display", "");
             }
           }),
         $("<a>")
@@ -391,9 +397,11 @@ td.thrnew { background-color: #FCE0D6; }
           .on("click", (e) => {
             e.preventDefault();
             if ($(e.target).toggleClass("enable").is(".enable")) {
-              ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
+              const res = $("div.thre > table > tbody > tr > td.rtd");
+              ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
             } else {
-              ancestor($("div.thre > table > tbody > tr > td.rtd").filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
+              const res = $("div.thre > table > tbody > tr > td.rtd");
+              ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
             }
           })
       )
