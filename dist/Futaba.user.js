@@ -351,7 +351,58 @@ td.thrnew { background-color: #FCE0D6; }
                 const res = $("div.thre > table > tbody > tr > td.rtd");
                 ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
             }
+        }), $("<a>")
+            .text("ツリー表示")
+            .on("click", (e) => {
+            e.preventDefault();
+            if ($(e.target).toggleClass("enable").is(".enable")) {
+                makeTreeView();
+            }
+            else {
+                makeFlatView();
+            }
         })));
+        const makeTreeView = () => {
+            let quoteList = [];
+            const res = $("div.thre > table");
+            for (let i = res.length - 1; i >= 0; i--) {
+                const table = res[i];
+                const td = $("td.rtd", table).first();
+                const text = $("blockquote, a, span", td)
+                    .contents()
+                    .filter((i, e) => {
+                    return e.nodeType === 3 && e instanceof Text && e.data !== "";
+                })
+                    .text();
+                const quote = $("blockquote > font", td).last();
+                quoteList = quoteList.filter((item) => {
+                    if (!text.includes(item.q)) {
+                        return true;
+                    }
+                    else {
+                        td.append(item.e);
+                        return false;
+                    }
+                });
+                if (quote.length > 0) {
+                    const mo = />([^>]+)$/.exec(quote.text());
+                    if (mo != null) {
+                        quoteList.unshift({ q: mo[1], e: table }); // remove ">" appeared at the first of quote string
+                    }
+                }
+            }
+        };
+        const makeFlatView = () => {
+            const array = [];
+            $("div.thre > table td.rtd > span:first-child").each((i, span) => {
+                var _a, _b, _c;
+                const table = (_c = (_b = (_a = span.parentNode) === null || _a === void 0 ? void 0 : _a.parentNode) === null || _b === void 0 ? void 0 : _b.parentNode) === null || _c === void 0 ? void 0 : _c.parentNode;
+                if (table != null && table instanceof HTMLElement && span.textContent != null) {
+                    array[parseInt(span.textContent)] = table;
+                }
+            });
+            $("div.thre > span.maxres").after(array);
+        };
     };
     const mo = /^https?:\/\/(\w+)\./.exec(location.href);
     const domain = mo == null ? "" : mo[1];
