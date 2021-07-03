@@ -252,13 +252,19 @@ td.thrnew { background-color: #FCE0D6; }
       save() {
         saveCatalog(this._cat);
       }
+
+      reload() {
+        $("table#cattable").load(location.href + " #cattable > tbody", () => {
+          this.save();
+          this.update();
+        });
+      }
     }
 
     const initialize = () => {
       const input = $('<input type="search" placeholder="Search ...">').css("vertical-align", "middle");
       const button = $("<input type='button' value='更新'>").on("click", () => {
-        table.save();
-        table.update();
+        table.reload();
       });
       const result = new FindResult();
       const table = new CatTable(input, result);
@@ -278,10 +284,7 @@ td.thrnew { background-color: #FCE0D6; }
 
       $(window).on("keydown", (e) => {
         if (e.key === "r") {
-          $("table#cattable").load(location.href + " #cattable > tbody", () => {
-            table.save();
-            table.update();
-          });
+          table.reload();
         }
       });
 
