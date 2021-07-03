@@ -416,16 +416,31 @@ td.thrnew { background-color: #FCE0D6; }
           .text("画像一覧")
           .on("click", (e) => {
             e.preventDefault();
-            const img = $("div.thre > table > tbody > tr > td.rtd a > img");
-            const gallery = $("<div id='gallery'>").append(img.parent().clone());
-            $("body").css("overflow-y", "hidden").append(gallery);
-            gallery.on("click", (e) => {
-              if (e.target.tagName === "DIV") {
-                e.target.parentNode?.removeChild(e.target);
-                $("body").css("overflow-y", "scroll");
-              }
-            });
-            gallery.get(0).focus();
+            const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
+            if (img.length === 0) {
+              return;
+            }
+            const destroy = () => {
+              $("#gallery").remove();
+              $("body").css("overflow-y", "scroll");
+            };
+            $("body")
+              .css("overflow-y", "hidden")
+              .append(
+                $("<div id='gallery'>")
+                  .append(img.parent().clone())
+                  .on("click", (e) => {
+                    if (e.target.tagName === "DIV") {
+                      destroy();
+                    }
+                  })
+                  .on("keydown", (e) => {
+                    if (e.key === "Escape" || e.key === "Esc") {
+                      destroy();
+                    }
+                  })
+              );
+            $("#gallery > a").first().trigger("focus");
           }),
         $("<a>")
           .text("画像")
