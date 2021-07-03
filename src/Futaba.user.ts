@@ -15,7 +15,9 @@
 // ==/UserScript==
 
 (function () {
-  type Catalog = { [key: string]: CatalogItem };
+  interface Catalog {
+    [key: string]: CatalogItem;
+  }
 
   interface CatalogItem {
     href: string;
@@ -294,6 +296,9 @@ td.thrnew { background-color: #FCE0D6; }
 .rtd.resnew {
   background-color: #FCE0D6;
 }
+.rtd.resnew > .rsc {
+  font-weight: bold;
+}
 #commands {
   position: fixed;
   bottom: 10px;
@@ -353,8 +358,10 @@ td.thrnew { background-color: #FCE0D6; }
     }
 
     res.removeClass("resnew");
-    if (cat[key].readres > 0) {
+    if (cat[key].readres >= 0) {
       res.slice(cat[key].readres).addClass("resnew");
+    } else {
+      res.addClass("resnew");
     }
     cat[key].readres = res.length;
 
