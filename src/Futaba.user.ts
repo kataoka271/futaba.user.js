@@ -255,13 +255,17 @@ td.thrnew { background-color: #FCE0D6; }
     }
 
     const initialize = () => {
-      const input = $('<input type="search" placeholder="Search ...">');
+      const input = $('<input type="search" placeholder="Search ...">').css("vertical-align", "middle");
+      const button = $("<input type='button' value='更新'>").on("click", () => {
+        table.save();
+        table.update();
+      });
       const result = new FindResult();
       const table = new CatTable(input, result);
 
       $("table#cattable")
         .before($("<p>"))
-        .before($('<div style="text-align:center">').append(input))
+        .before($('<div style="text-align:center">').append(input).append(" ").append(button))
         .before($("<p>"))
         .before(result.table())
         .before($("<p>"));
@@ -330,6 +334,23 @@ td.thrnew { background-color: #FCE0D6; }
 #commands a.enable:hover {
   color: rgb(100, 100, 100);
 }
+#gallery {
+  position: fixed;
+  background-color: rgba(0, 0, 0, 0.7);
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  overflow-y: scroll;
+}
+#gallery > a {
+  display: inline-block;
+}
+#gallery > a > img {
+  margin: 0;
+  width: auto;
+  height: 300px;
+}
 `);
 
     const root = $("div.thre");
@@ -388,6 +409,21 @@ td.thrnew { background-color: #FCE0D6; }
 
     $("body").append(
       $("<div id='commands'>").append(
+        $("<a>")
+          .text("画像一覧")
+          .on("click", (e) => {
+            e.preventDefault();
+            const img = $("div.thre > table > tbody > tr > td.rtd a > img");
+            const gallery = $("<div id='gallery'>").append(img.parent().clone());
+            $("body").css("overflow-y", "hidden").append(gallery);
+            gallery.on("click", (e) => {
+              if (e.target.tagName === "DIV") {
+                e.target.parentNode?.removeChild(e.target);
+                $("body").css("overflow-y", "scroll");
+              }
+            });
+            gallery.get(0).focus();
+          }),
         $("<a>")
           .text("画像")
           .on("click", (e) => {
