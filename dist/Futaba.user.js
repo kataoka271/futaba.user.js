@@ -314,16 +314,16 @@ td.thrnew { background-color: #FCE0D6; }
   height: 300px;
 }
 `);
-        const root = $("div.thre");
-        if (root.length === 0) {
-            return; // thread is dead
-        }
-        const key = getKey(domain, location.href);
-        if (key == null) {
-            return;
-        }
-        const cat = loadCatalog();
         const initialize = () => {
+            const root = $("div.thre");
+            if (root.length === 0) {
+                return false; // thread is dead
+            }
+            const key = getKey(domain, location.href);
+            if (key == null) {
+                return false;
+            }
+            const cat = loadCatalog();
             const res = $("div.thre > table > tbody > tr > td.rtd");
             if (cat[key] != null) {
                 cat[key].res = res.length;
@@ -348,17 +348,38 @@ td.thrnew { background-color: #FCE0D6; }
             }
             cat[key].readres = res.length;
             saveCatalog(cat, "1");
+            window.scrollTo(0, cat[key].offset);
+            $(window).on("scroll", () => {
+                cat[key].offset = window.scrollY;
+            });
+            $(window).on("unload", () => {
+                const newcat = loadCatalog();
+                newcat[key] = cat[key];
+                saveCatalog(newcat, "1");
+            });
+            setInterval(() => {
+                const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
+                if (res.length === cat[key].readres) {
+                    return;
+                }
+                res.parent().removeClass("resnew");
+                res
+                    .filter((i, e) => {
+                    return e.textContent != null && parseInt(e.textContent) > cat[key].readres;
+                })
+                    .parent()
+                    .addClass("resnew");
+                cat[key].res = res.length;
+                cat[key].readres = res.length;
+                const newcat = loadCatalog();
+                newcat[key] = cat[key];
+                saveCatalog(newcat, "1");
+            }, 1000);
+            return true;
         };
-        initialize();
-        window.scrollTo(0, cat[key].offset);
-        $(window).on("scroll", () => {
-            cat[key].offset = window.scrollY;
-        });
-        $(window).on("unload", () => {
-            const newcat = loadCatalog();
-            newcat[key] = cat[key];
-            saveCatalog(newcat, "1");
-        });
+        if (!initialize()) {
+            return;
+        }
         const ancestor = (td) => {
             return td.parent().parent().parent();
         };
