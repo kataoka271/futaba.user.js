@@ -185,6 +185,10 @@ td.thrnew { background-color: #FCE0D6; }
       table(): JQuery<HTMLElement> {
         return this._table;
       }
+
+      count(): number {
+        return this._count;
+      }
     }
 
     class Protect {
@@ -246,7 +250,9 @@ td.thrnew { background-color: #FCE0D6; }
         } else {
           this._result.append(findItemsHist(this._cat));
         }
-        this._result.table().show();
+        if (this._result.count() > 0) {
+          this._result.table().show();
+        }
       }
 
       save() {
@@ -310,6 +316,7 @@ td.thrnew { background-color: #FCE0D6; }
   position: fixed;
   bottom: 10px;
   right: 10px;
+  z-index: 1000;
 }
 #commands a {
   background-color: rgb(200, 200, 200);
@@ -344,7 +351,7 @@ td.thrnew { background-color: #FCE0D6; }
   left: 0;
   bottom: 0;
   right: 0;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 #gallery > a {
   display: inline-block;
@@ -406,41 +413,52 @@ td.thrnew { background-color: #FCE0D6; }
     const hasImage = (td: HTMLElement): boolean => {
       return $("img", td).length > 0;
     };
+
     const ancestor = (td: JQuery<HTMLElement>): JQuery<HTMLElement> => {
       return td.parent().parent().parent();
     };
 
+    const galleryDestroy = () => {
+      $("#gallery-button").removeClass("enable");
+      $("#gallery").remove();
+      $("body").css("overflow-y", "auto");
+    };
+
+    const galleryCreate = () => {
+      const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
+      if (img.length === 0) {
+        return;
+      }
+      $("body")
+        .css("overflow-y", "hidden")
+        .append(
+          $("<div id='gallery'>")
+            .append(img.parent().clone())
+            .on("click", (e) => {
+              if (e.target.tagName === "DIV") {
+                galleryDestroy();
+              }
+            })
+            .on("keydown", (e) => {
+              if (e.key === "Escape" || e.key === "Esc") {
+                galleryDestroy();
+              }
+            })
+        );
+      $("#gallery > a").first().trigger("focus");
+    };
+
     $("body").append(
       $("<div id='commands'>").append(
-        $("<a>")
+        $("<a id='gallery-button'>")
           .text("画像一覧")
           .on("click", (e) => {
             e.preventDefault();
-            const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-            if (img.length === 0) {
-              return;
+            if ($(e.target).toggleClass("enable").is(".enable")) {
+              galleryCreate();
+            } else {
+              galleryDestroy();
             }
-            const destroy = () => {
-              $("#gallery").remove();
-              $("body").css("overflow-y", "scroll");
-            };
-            $("body")
-              .css("overflow-y", "hidden")
-              .append(
-                $("<div id='gallery'>")
-                  .append(img.parent().clone())
-                  .on("click", (e) => {
-                    if (e.target.tagName === "DIV") {
-                      destroy();
-                    }
-                  })
-                  .on("keydown", (e) => {
-                    if (e.key === "Escape" || e.key === "Esc") {
-                      destroy();
-                    }
-                  })
-              );
-            $("#gallery > a").first().trigger("focus");
           }),
         $("<a>")
           .text("画像")
