@@ -372,29 +372,36 @@ td.thrnew { background-color: #FCE0D6; }
       return;
     }
     const cat: Catalog = loadCatalog();
-    const res = $("div.thre > table > tbody > tr > td.rtd");
 
-    if (cat[key] != null) {
-      cat[key].res = res.length;
-      cat[key].updateTime = Date.now();
-    } else {
-      cat[key] = {
-        href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
-        res: res.length,
-        readres: 0,
-        title: document.title.replace(/ - ..*$/, ""),
-        updateTime: Date.now(),
-        offset: 0,
-      };
-    }
+    const initialize = () => {
+      const res = $("div.thre > table > tbody > tr > td.rtd");
 
-    res.removeClass("resnew");
-    if (cat[key].readres >= 0) {
-      res.slice(cat[key].readres).addClass("resnew");
-    } else {
-      res.addClass("resnew");
-    }
-    cat[key].readres = res.length;
+      if (cat[key] != null) {
+        cat[key].res = res.length;
+        cat[key].updateTime = Date.now();
+      } else {
+        cat[key] = {
+          href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
+          res: res.length,
+          readres: 0,
+          title: document.title.replace(/ - ..*$/, ""),
+          updateTime: Date.now(),
+          offset: 0,
+        };
+      }
+
+      res.removeClass("resnew");
+      if (cat[key].readres >= 0) {
+        res.slice(cat[key].readres).addClass("resnew");
+      } else {
+        res.addClass("resnew");
+      }
+      cat[key].readres = res.length;
+
+      saveCatalog(cat, "1");
+    };
+
+    initialize();
 
     window.scrollTo(0, cat[key].offset);
 
@@ -407,8 +414,6 @@ td.thrnew { background-color: #FCE0D6; }
       newcat[key] = cat[key];
       saveCatalog(newcat, "1");
     });
-
-    saveCatalog(cat, "1");
 
     const hasImage = (td: HTMLElement): boolean => {
       return $("img", td).length > 0;
@@ -439,13 +444,12 @@ td.thrnew { background-color: #FCE0D6; }
                 galleryDestroy();
               }
             })
-            .on("keydown", (e) => {
-              if (e.key === "Escape" || e.key === "Esc") {
-                galleryDestroy();
-              }
-            })
-        );
-      $("#gallery > a").first().trigger("focus");
+        )
+        .on("keydown", (e) => {
+          if (e.key === "Escape" || e.key === "Esc") {
+            galleryDestroy();
+          }
+        });
     };
 
     $("body").append(
