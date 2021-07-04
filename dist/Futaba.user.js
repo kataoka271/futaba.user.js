@@ -359,9 +359,6 @@ td.thrnew { background-color: #FCE0D6; }
             newcat[key] = cat[key];
             saveCatalog(newcat, "1");
         });
-        const hasImage = (td) => {
-            return $("img", td).length > 0;
-        };
         const ancestor = (td) => {
             return td.parent().parent().parent();
         };
@@ -390,11 +387,14 @@ td.thrnew { background-color: #FCE0D6; }
                 }
             });
         };
+        const toggleButton = (e) => {
+            e.preventDefault();
+            return $(e.target).toggleClass("enable").is(".enable");
+        };
         $("body").append($("<div id='commands'>").append($("<a id='gallery-button'>")
             .text("画像一覧")
             .on("click", (e) => {
-            e.preventDefault();
-            if ($(e.target).toggleClass("enable").is(".enable")) {
+            if (toggleButton(e)) {
                 galleryCreate();
             }
             else {
@@ -403,32 +403,29 @@ td.thrnew { background-color: #FCE0D6; }
         }), $("<a>")
             .text("画像")
             .on("click", (e) => {
-            e.preventDefault();
-            if ($(e.target).toggleClass("enable").is(".enable")) {
+            if (toggleButton(e)) {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !hasImage(e))).css("display", "none");
+                ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "none");
             }
             else {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !hasImage(e))).css("display", "");
+                ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "");
             }
         }), $("<a>")
             .text("新着")
             .on("click", (e) => {
-            e.preventDefault();
-            if ($(e.target).toggleClass("enable").is(".enable")) {
+            if (toggleButton(e)) {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
+                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "none");
             }
             else {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
+                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
             }
         }), $("<a>")
             .text("ツリー表示")
             .on("click", (e) => {
-            e.preventDefault();
-            if ($(e.target).toggleClass("enable").is(".enable")) {
+            if (toggleButton(e)) {
                 makeTreeView();
             }
             else {
