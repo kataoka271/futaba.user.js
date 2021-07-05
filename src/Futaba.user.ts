@@ -377,14 +377,140 @@ td.thrnew { background-color: #FCE0D6; }
 }
 `);
 
+    const toggleButton = (e: JQuery.TriggeredEvent) => {
+      e.preventDefault();
+      return $(e.target).toggleClass("enable").is(".enable");
+    };
+
+    const ancestor = (td: JQuery<HTMLElement>): JQuery<HTMLElement> => {
+      return td.parent().parent().parent();
+    };
+
+    const galleryCreate = () => {
+      const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
+      if (img.length === 0) {
+        return;
+      }
+      $("body")
+        .css("overflow-y", "hidden")
+        .append(
+          $("<div id='gallery'>")
+            .append(img.parent().clone())
+            .on("click", (e) => {
+              if (e.target.tagName === "DIV") {
+                galleryDestroy();
+              }
+            })
+        )
+        .on("keydown", (e) => {
+          if (e.key === "Escape" || e.key === "Esc") {
+            galleryDestroy();
+          }
+        });
+    };
+
+    const galleryDestroy = () => {
+      $("#gallery-button").removeClass("enable");
+      $("#gallery").remove();
+      $("body").css("overflow-y", "auto");
+    };
+
+    const makeTreeView = () => {
+      let quoteList: { q: string; e: HTMLElement }[] = [];
+      const res = $("div.thre > table");
+      for (let i = res.length - 1; i >= 0; i--) {
+        const table = res[i];
+        const td = $("td.rtd", table).first();
+        const text = $("blockquote, a, span", td)
+          .contents()
+          .filter((i, e) => {
+            return e.nodeType === 3 && e instanceof Text && e.data !== "";
+          })
+          .text();
+        const quote = $("blockquote > font", td).last();
+        quoteList = quoteList.filter((item) => {
+          if (!text.includes(item.q)) {
+            return true;
+          } else {
+            td.append(item.e);
+            return false;
+          }
+        });
+        if (quote.length > 0) {
+          const mo = />([^>]+)$/.exec(quote.text());
+          if (mo != null) {
+            quoteList.unshift({ q: mo[1], e: table }); // remove ">" appeared at the first of quote string
+          }
+        }
+      }
+    };
+
+    const makeFlatView = () => {
+      const array: HTMLElement[] = [];
+      $("div.thre > table td.rtd > span:first-child").each((i, span) => {
+        const table = span.parentNode?.parentNode?.parentNode?.parentNode;
+        if (table != null && table instanceof HTMLElement && span.textContent != null) {
+          array[parseInt(span.textContent)] = table;
+        }
+      });
+      $("div.thre > span.maxres").after(array);
+    };
+
+    const makeCommands = () => {
+      $("body").append(
+        $("<div id='commands'>").append(
+          $("<a id='gallery-button'>")
+            .text("画像一覧")
+            .on("click", (e) => {
+              if (toggleButton(e)) {
+                galleryCreate();
+              } else {
+                galleryDestroy();
+              }
+            }),
+          $("<a>")
+            .text("画像")
+            .on("click", (e) => {
+              if (toggleButton(e)) {
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "none");
+              } else {
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "");
+              }
+            }),
+          $("<a>")
+            .text("新着")
+            .on("click", (e) => {
+              if (toggleButton(e)) {
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "none");
+              } else {
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
+              }
+            }),
+          $("<a>")
+            .text("ツリー表示")
+            .on("click", (e) => {
+              if (toggleButton(e)) {
+                makeTreeView();
+              } else {
+                makeFlatView();
+              }
+            })
+        )
+      );
+    };
+
     const initialize = () => {
       const root = $("div.thre");
       if (root.length === 0) {
-        return false; // thread is dead
+        return; // thread is dead
       }
       const key = getKey(domain, location.href);
       if (key == null) {
-        return false;
+        return;
       }
       const cat: Catalog = loadCatalog();
       const res = $("div.thre > table > tbody > tr > td.rtd");
@@ -457,136 +583,10 @@ td.thrnew { background-color: #FCE0D6; }
         timer = { set: true, id: setTimeout(checkAndUpdate, 2000, 2) };
       });
 
-      return true;
+      makeCommands();
     };
 
-    if (!initialize()) {
-      return;
-    }
-
-    const ancestor = (td: JQuery<HTMLElement>): JQuery<HTMLElement> => {
-      return td.parent().parent().parent();
-    };
-
-    const galleryDestroy = () => {
-      $("#gallery-button").removeClass("enable");
-      $("#gallery").remove();
-      $("body").css("overflow-y", "auto");
-    };
-
-    const galleryCreate = () => {
-      const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-      if (img.length === 0) {
-        return;
-      }
-      $("body")
-        .css("overflow-y", "hidden")
-        .append(
-          $("<div id='gallery'>")
-            .append(img.parent().clone())
-            .on("click", (e) => {
-              if (e.target.tagName === "DIV") {
-                galleryDestroy();
-              }
-            })
-        )
-        .on("keydown", (e) => {
-          if (e.key === "Escape" || e.key === "Esc") {
-            galleryDestroy();
-          }
-        });
-    };
-
-    const toggleButton = (e: JQuery.TriggeredEvent) => {
-      e.preventDefault();
-      return $(e.target).toggleClass("enable").is(".enable");
-    };
-
-    $("body").append(
-      $("<div id='commands'>").append(
-        $("<a id='gallery-button'>")
-          .text("画像一覧")
-          .on("click", (e) => {
-            if (toggleButton(e)) {
-              galleryCreate();
-            } else {
-              galleryDestroy();
-            }
-          }),
-        $("<a>")
-          .text("画像")
-          .on("click", (e) => {
-            if (toggleButton(e)) {
-              const res = $("div.thre > table > tbody > tr > td.rtd");
-              ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "none");
-            } else {
-              const res = $("div.thre > table > tbody > tr > td.rtd");
-              ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "");
-            }
-          }),
-        $("<a>")
-          .text("新着")
-          .on("click", (e) => {
-            if (toggleButton(e)) {
-              const res = $("div.thre > table > tbody > tr > td.rtd");
-              ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "none");
-            } else {
-              const res = $("div.thre > table > tbody > tr > td.rtd");
-              ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
-            }
-          }),
-        $("<a>")
-          .text("ツリー表示")
-          .on("click", (e) => {
-            if (toggleButton(e)) {
-              makeTreeView();
-            } else {
-              makeFlatView();
-            }
-          })
-      )
-    );
-
-    const makeTreeView = () => {
-      let quoteList: { q: string; e: HTMLElement }[] = [];
-      const res = $("div.thre > table");
-      for (let i = res.length - 1; i >= 0; i--) {
-        const table = res[i];
-        const td = $("td.rtd", table).first();
-        const text = $("blockquote, a, span", td)
-          .contents()
-          .filter((i, e) => {
-            return e.nodeType === 3 && e instanceof Text && e.data !== "";
-          })
-          .text();
-        const quote = $("blockquote > font", td).last();
-        quoteList = quoteList.filter((item) => {
-          if (!text.includes(item.q)) {
-            return true;
-          } else {
-            td.append(item.e);
-            return false;
-          }
-        });
-        if (quote.length > 0) {
-          const mo = />([^>]+)$/.exec(quote.text());
-          if (mo != null) {
-            quoteList.unshift({ q: mo[1], e: table }); // remove ">" appeared at the first of quote string
-          }
-        }
-      }
-    };
-
-    const makeFlatView = () => {
-      const array: HTMLElement[] = [];
-      $("div.thre > table td.rtd > span:first-child").each((i, span) => {
-        const table = span.parentNode?.parentNode?.parentNode?.parentNode;
-        if (table != null && table instanceof HTMLElement && span.textContent != null) {
-          array[parseInt(span.textContent)] = table;
-        }
-      });
-      $("div.thre > span.maxres").after(array);
-    };
+    initialize();
   };
 
   const mo = /^https?:\/\/(\w+)\./.exec(location.href);
