@@ -94,14 +94,27 @@ td.thrnew { background-color: #FCE0D6; }
       if (key == null) {
         return;
       }
-      cat[key] = {
-        href: href,
-        res: parseInt($("font", td).text()),
-        readres: cat[key]?.readres ?? -1,
-        title: $("small", td).text(),
-        updateTime: Date.now(),
-        offset: cat[key]?.offset ?? 0,
-      };
+      const res = parseInt($("font", td).text());
+      const title = $("small", td).text();
+      if (cat[key] != null) {
+        cat[key] = {
+          href: href,
+          res: res,
+          readres: cat[key].readres,
+          title: title,
+          updateTime: Date.now(),
+          offset: cat[key].offset,
+        };
+      } else {
+        cat[key] = {
+          href: href,
+          res: res,
+          readres: -1,
+          title: title,
+          updateTime: Date.now(),
+          offset: 0,
+        };
+      }
       let resnum = $("span.resnum", td).first();
       if (resnum.length === 0) {
         resnum = $('<span class="resnum">');
@@ -117,6 +130,7 @@ td.thrnew { background-color: #FCE0D6; }
           } else if (resDiff < 0) {
             cat[key].res = oldcat[key].readres;
             resnum.text("");
+            $("font", td).text(cat[key].res);
             $(td).addClass("reseq");
           } else {
             resnum.text("");
@@ -411,9 +425,15 @@ td.thrnew { background-color: #FCE0D6; }
         saveCatalog(newcat, "1");
       });
 
-      setInterval(() => {
+      let timer: { set: boolean; id?: number } = { set: false };
+
+      const checkAndUpdate = (count?: number) => {
+        timer.set = false;
         const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
         if (res.length === cat[key].readres) {
+          if (count != null && count > 0) {
+            timer = { set: true, id: setTimeout(checkAndUpdate, 1000, count - 1) };
+          }
           return;
         }
         res.parent().removeClass("resnew");
@@ -428,7 +448,14 @@ td.thrnew { background-color: #FCE0D6; }
         const newcat: Catalog = loadCatalog();
         newcat[key] = cat[key];
         saveCatalog(newcat, "1");
-      }, 1000);
+      };
+
+      $("#contres > a").on("click", () => {
+        if (timer.set) {
+          return;
+        }
+        timer = { set: true, id: setTimeout(checkAndUpdate, 2000, 2) };
+      });
 
       return true;
     };
