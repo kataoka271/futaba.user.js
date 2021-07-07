@@ -5,7 +5,7 @@
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
-// @updateURL    https://github.com/kataoka271/userscripts/blob/master/dist/Futaba.user.js
+// @updateURL    https://github.com/kataoka271/userscripts/raw/master/dist/Futaba.user.js
 // @require      http://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js
 // @grant        GM_setValue
 // @grant        GM_getValue
