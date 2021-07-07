@@ -85,7 +85,7 @@ td.thrnew { background-color: #FCE0D6; }
       });
     };
 
-    const updateCat = (td: HTMLElement, cat: Catalog, oldcat: Catalog) => {
+    const updateCat = (cat: Catalog, td: HTMLElement, oldcat: Catalog) => {
       const href = $("a", td).attr("href");
       if (href == null) {
         return;
@@ -147,7 +147,7 @@ td.thrnew { background-color: #FCE0D6; }
       }
     };
 
-    const makeupTable = (oldcat: Catalog): Catalog => {
+    const filterValidItems = (oldcat: Catalog): Catalog => {
       const expireTime = 259200000; // 3days
       const now = Date.now();
       const cat: Catalog = {};
@@ -157,9 +157,6 @@ td.thrnew { background-color: #FCE0D6; }
           cat[key] = item;
         }
       }
-      $("table#cattable td").each(function () {
-        updateCat(this, cat, oldcat);
-      });
       return cat;
     };
 
@@ -255,7 +252,10 @@ td.thrnew { background-color: #FCE0D6; }
 
       update() {
         this._oldcat = loadCatalog();
-        this._cat = makeupTable(this._oldcat);
+        this._cat = filterValidItems(this._oldcat);
+        $("table#cattable td").each((i, elem) => {
+          updateCat(this._cat, elem, this._oldcat);
+        });
         this._result.table().hide();
         this._result.clear();
         const keyword = this._input.val();
