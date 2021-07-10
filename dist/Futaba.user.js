@@ -131,7 +131,7 @@ td.thrnew { background-color: #FCE0D6; }
                 $(td).addClass("thrnew");
             }
         };
-        const filterValidItems = (oldcat) => {
+        const filterNotExpiredItems = (oldcat) => {
             const expireTime = 259200000; // 3days
             const now = Date.now();
             const cat = {};
@@ -213,7 +213,7 @@ td.thrnew { background-color: #FCE0D6; }
             }
             update() {
                 this._oldcat = loadCatalog();
-                this._cat = filterValidItems(this._oldcat);
+                this._cat = filterNotExpiredItems(this._oldcat);
                 $("table#cattable td").each((i, elem) => {
                     updateCat(this._cat, elem, this._oldcat);
                 });
