@@ -241,7 +241,7 @@ td.thrnew { background-color: #FCE0D6; }
             }
         }
         const initialize = () => {
-            const input = $('<input type="search" placeholder="Search ...">').css("vertical-align", "middle");
+            const input = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
             const button = $("<input type='button' value='更新'>").on("click", () => {
                 table.reload();
             });
@@ -288,7 +288,7 @@ td.thrnew { background-color: #FCE0D6; }
   background-color: rgb(200, 200, 200);
   border: 2px outset rgb(200, 200, 200);
   color: rgb(100, 100, 100);
-  font-size: 100%;
+  font-size: 90%;
   padding: 0.2em 0.85em;
   cursor: pointer;
   display: inline-block;
@@ -318,6 +318,7 @@ td.thrnew { background-color: #FCE0D6; }
   bottom: 0;
   right: 0;
   overflow-y: auto;
+  text-align: center;
 }
 #gallery > a {
   display: inline-block;
@@ -443,6 +444,19 @@ td.thrnew { background-color: #FCE0D6; }
                     makeFlatView();
                 }
             })));
+        };
+        const getCurrentRes = () => {
+            return parseInt($("div.thre table")
+                .filter((i, e) => {
+                const offset = $(e).offset();
+                if (offset == null) {
+                    return false;
+                }
+                return offset.top + e.clientHeight < window.scrollY + window.innerHeight;
+            })
+                .last()
+                .find("tbody > tr > td.rtd > span:first-child")
+                .text());
         };
         const initialize = () => {
             const root = $("div.thre");
