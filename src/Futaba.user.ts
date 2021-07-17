@@ -200,6 +200,14 @@ td.thrnew { background-color: #FCE0D6; }
       count(): number {
         return this._count;
       }
+
+      show() {
+        this._table.show();
+      }
+
+      hide() {
+        this._table.hide();
+      }
     }
 
     class Protect {
@@ -256,7 +264,7 @@ td.thrnew { background-color: #FCE0D6; }
         $("table#cattable td").each((i, elem) => {
           updateCat(this._cat, elem, this._oldcat);
         });
-        this._result.table().hide();
+        this._result.hide();
         this._result.clear();
         const keyword = this._input.val();
         if (typeof keyword === "string" && keyword !== "") {
@@ -265,7 +273,7 @@ td.thrnew { background-color: #FCE0D6; }
           this._result.append(findItemsHist(this._cat));
         }
         if (this._result.count() > 0) {
-          this._result.table().show();
+          this._result.show();
         }
       }
 
