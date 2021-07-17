@@ -451,19 +451,6 @@ td.thrnew { background-color: #FCE0D6; }
                 }
             })));
         };
-        const getCurrentRes = () => {
-            return parseInt($("div.thre table")
-                .filter((i, e) => {
-                const offset = $(e).offset();
-                if (offset == null) {
-                    return false;
-                }
-                return offset.top + e.clientHeight < window.scrollY + window.innerHeight;
-            })
-                .last()
-                .find("tbody > tr > td.rtd > span:first-child")
-                .text());
-        };
         const initialize = () => {
             const root = $("div.thre");
             if (root.length === 0) {
