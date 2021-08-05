@@ -248,6 +248,31 @@ td.thrnew { background-color: #FCE0D6; }
                 });
             }
         }
+        const timeFormat = (date) => {
+            const year = date.getFullYear().toString();
+            const month = date.getMonth().toString().padStart(2, "0");
+            const day = date.getDay().toString().padStart(2, "0");
+            const hours = date.getHours().toString().padStart(2, "0");
+            const minutes = date.getMinutes().toString().padStart(2, "0");
+            const seconds = date.getSeconds().toString().padStart(2, "0");
+            return year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
+        };
+        const autoUpdateInput = (table) => {
+            let updateTimer;
+            const onTimer = () => {
+                const interval = $("input#auto-update-interval").val();
+                clearTimeout(updateTimer);
+                table.reload(false);
+                console.log("auto-update", timeFormat(new Date()));
+                if ($("input#auto-update-check").prop("checked") && typeof interval === "string" && parseInt(interval) > 0) {
+                    updateTimer = setTimeout(onTimer, parseInt(interval) * 1000);
+                }
+            };
+            const check = $("<div>")
+                .css("display", "inline-block")
+                .append($("<input id='auto-update-interval' type='number' value='10'>").css("width", "3em"), $("<input id='auto-update-check' type='checkbox'>").on("click", onTimer));
+            return check;
+        };
         const initialize = () => {
             const input = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
             const button = $("<input type='button' value='更新'>").on("click", () => {
@@ -255,9 +280,10 @@ td.thrnew { background-color: #FCE0D6; }
             });
             const result = new FindResult();
             const table = new CatTable(input, result);
+            const check = autoUpdateInput(table);
             $("table#cattable")
                 .before($("<p>"))
-                .before($('<div style="text-align:center">').append(input).append(" ").append(button))
+                .before($('<div style="text-align:center">').append(input).append(" ").append(button).append(check))
                 .before($("<p>"))
                 .before(result.table())
                 .before($("<p>"));
