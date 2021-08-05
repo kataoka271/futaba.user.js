@@ -239,9 +239,11 @@ td.thrnew { background-color: #FCE0D6; }
             save() {
                 saveCatalog(this._cat);
             }
-            reload() {
+            reload(save) {
                 $("table#cattable").load(location.href + " #cattable > tbody", () => {
-                    this.save();
+                    if (save == null || save) {
+                        this.save();
+                    }
                     this.update();
                 });
             }
