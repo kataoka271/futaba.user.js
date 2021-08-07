@@ -303,21 +303,26 @@ td.thrnew { background-color: #FCE0D6; }
 
     const autoUpdateInput = (table: CatTable) => {
       let updateTimer: number;
-      const onTimer = () => {
-        const interval = $("input#auto-update-interval").val();
+      const onTimer = (first?: boolean) => {
+        const interval = $("#auto-update-interval").val();
         clearTimeout(updateTimer);
-        table.reload(false);
-        console.log("auto-update", timeFormat(new Date()));
-        if ($("input#auto-update-check").prop("checked") && typeof interval === "string" && parseInt(interval) > 0) {
+        if (typeof interval === "string" && parseInt(interval) > 0) {
           updateTimer = setTimeout(onTimer, parseInt(interval) * 1000);
+          if (!first) {
+            table.reload(false);
+            console.log("auto-update", timeFormat(new Date()));
+          }
+        } else {
+          $("#auto-update-interval").val(0);
         }
       };
-      const check = $("<div>")
-        .css("display", "inline-block")
-        .append(
-          $("<input id='auto-update-interval' type='number' value='10'>").css("width", "3em"),
-          $("<input id='auto-update-check' type='checkbox'>").on("click", onTimer)
-        );
+      const choice = $("<select id='auto-update-interval'>").append(
+        $("<option value='0'>").text("Off"),
+        $("<option value='30'>").text("30sec"),
+        $("<option value='60'>").text("1min"),
+        $("<option value='180'>").text("3min")
+      );
+      const check = $("<div>").css("display", "inline-block").append(choice.on("input", () => onTimer(true)));
       return check;
     };
 
@@ -330,12 +335,13 @@ td.thrnew { background-color: #FCE0D6; }
       const table = new CatTable(input, result);
       const check = autoUpdateInput(table);
 
-      $("table#cattable")
-        .before($("<p>"))
-        .before($('<div style="text-align:center">').append(input).append(" ").append(button).append(check))
-        .before($("<p>"))
-        .before(result.table())
-        .before($("<p>"));
+      $("table#cattable").before(
+        $("<p>"),
+        $('<div style="text-align:center">').append(input, " ", button, " ", check),
+        $("<p>"),
+        result.table(),
+        $("<p>")
+      );
 
       table.update();
 
