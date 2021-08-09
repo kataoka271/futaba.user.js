@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.3
+// @version      0.0.5
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -64,6 +64,7 @@ td.resdown .resnum { color: #2020F0; }
 td.resdown { background-color: #CCCCCC; }
 td.reseq { background-color: #CCCCCC; }
 td.thrnew { background-color: #FCE0D6; }
+td.catup .resnum { color: #F02020; }
 `);
 
     const findItemsText = (text: string): JQuery<HTMLElement> => {
@@ -120,7 +121,8 @@ td.thrnew { background-color: #FCE0D6; }
         resnum = $('<span class="resnum">');
         $("font", td).after(resnum);
       }
-      $(td).removeClass("resup reseq thrnew");
+      resnum.empty();
+      $(td).removeClass("resup reseq thrnew catup");
       if (oldcat[key] != null) {
         if (oldcat[key].readres >= 0) {
           const resDiff = cat[key].res - oldcat[key].readres;
@@ -129,20 +131,20 @@ td.thrnew { background-color: #FCE0D6; }
             $(td).addClass("resup");
           } else if (resDiff < 0) {
             cat[key].res = oldcat[key].readres;
-            resnum.text("");
             $("font", td).text(cat[key].res);
             $(td).addClass("reseq");
           } else {
-            resnum.text("");
             $(td).addClass("reseq");
           }
-        } else {
-          // No update
-          resnum.text("");
+        } else if (oldcat[key].res >= 0) {
+          const catDiff = cat[key].res - oldcat[key].res;
+          if (catDiff > 0) {
+            resnum.text("+" + catDiff);
+            $(td).addClass("catup");
+          }
         }
       } else {
         // NEW
-        resnum.text("");
         $(td).addClass("thrnew");
       }
     };
