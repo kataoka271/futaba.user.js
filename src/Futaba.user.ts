@@ -57,14 +57,7 @@
 
   const onCatMode = (domain: string) => {
     GM_addStyle(`\
-.resnum { margin-left: 2px; font-size: 70%; }
-td.resup .resnum { color: #F02020; }
-td.resup { background-color: #FCE0D6; }
-td.resdown .resnum { color: #2020F0; }
-td.resdown { background-color: #CCCCCC; }
-td.reseq { background-color: #CCCCCC; }
-td.thrnew { background-color: #FCE0D6; }
-td.catup .resnum { color: #F02020; }
+@@include("Futaba-cat.user.css")
 `);
 
     const findItemsText = (text: string): JQuery<HTMLElement> => {
@@ -369,62 +362,7 @@ td.catup .resnum { color: #F02020; }
 
   const onResMode = (domain: string) => {
     GM_addStyle(`\
-.rtd.resnew {
-  background-color: #FCE0D6;
-}
-.rtd.resnew > .rsc {
-  font-weight: bold;
-}
-#commands {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 1000;
-}
-#commands a {
-  background-color: rgb(200, 200, 200);
-  border: 2px outset rgb(200, 200, 200);
-  color: rgb(100, 100, 100);
-  font-size: 90%;
-  padding: 0.2em 0.85em;
-  cursor: pointer;
-  display: inline-block;
-}
-#commands a:hover {
-  color: rgb(200, 0, 0);
-}
-#commands a:first-child {
-  border-radius: 5px / 20% 0 0 20%;
-}
-#commands a:last-child {
-  border-radius: 5px / 0 20% 20% 0;
-}
-#commands a.enable {
-  background-color: rgb(150, 150, 150);
-  border-style: inset;
-  color: rgb(200, 0, 0);
-}
-#commands a.enable:hover {
-  color: rgb(100, 100, 100);
-}
-#gallery {
-  position: fixed;
-  background-color: rgba(0, 0, 0, 0.7);
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  overflow-y: auto;
-  text-align: center;
-}
-#gallery > a {
-  display: inline-block;
-}
-#gallery > a > img {
-  margin: 0;
-  width: auto;
-  height: 300px;
-}
+@@include("Futaba-res.user.css")
 `);
 
     const toggleButton = (e: JQuery.TriggeredEvent) => {

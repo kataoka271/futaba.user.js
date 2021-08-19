@@ -1,0 +1,8 @@
+.resnum { margin-left: 2px; font-size: 70%; }
+td.resup .resnum { color: #F02020; }
+td.resup { background-color: #FCE0D6; }
+td.resdown .resnum { color: #2020F0; }
+td.resdown { background-color: #CCCCCC; }
+td.reseq { background-color: #CCCCCC; }
+td.thrnew { background-color: #FCE0D6; }
+td.catup .resnum { color: #F02020; }
