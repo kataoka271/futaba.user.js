@@ -38,14 +38,31 @@
     });
     const onCatMode = (domain) => {
         GM_addStyle(`\
-.resnum { margin-left: 2px; font-size: 70%; }
-td.resup .resnum { color: #F02020; }
-td.resup { background-color: #FCE0D6; }
-td.resdown .resnum { color: #2020F0; }
-td.resdown { background-color: #CCCCCC; }
-td.reseq { background-color: #CCCCCC; }
-td.thrnew { background-color: #FCE0D6; }
-td.catup .resnum { color: #F02020; }
+.resnum {
+  margin-left: 2px;
+  font-size: 70%;
+}
+td.resup .resnum {
+  color: #f02020;
+}
+td.resup {
+  background-color: #fce0d6;
+}
+td.resdown .resnum {
+  color: #2020f0;
+}
+td.resdown {
+  background-color: #cccccc;
+}
+td.reseq {
+  background-color: #cccccc;
+}
+td.thrnew {
+  background-color: #fce0d6;
+}
+td.catup .resnum {
+  color: #f02020;
+}
 `);
         const findItemsText = (text) => {
             return $("table#cattable td").filter((i, e) => {
@@ -308,7 +325,7 @@ td.catup .resnum { color: #F02020; }
     const onResMode = (domain) => {
         GM_addStyle(`\
 .rtd.resnew {
-  background-color: #FCE0D6;
+  background-color: #fce0d6;
 }
 .rtd.resnew > .rsc {
   font-weight: bold;
