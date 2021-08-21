@@ -50,6 +50,39 @@
     return update;
   };
 
+  const timeFormat = (date: Date): string => {
+    const year = date.getFullYear().toString();
+    const month = date.getMonth().toString().padStart(2, "0");
+    const day = date.getDay().toString().padStart(2, "0");
+    const hours = date.getHours().toString().padStart(2, "0");
+    const minutes = date.getMinutes().toString().padStart(2, "0");
+    const seconds = date.getSeconds().toString().padStart(2, "0");
+    return year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
+  };
+
+  const autoUpdateInput = (onUpdate: () => void, ...options: [string, number][]) => {
+    let updateTimer: number;
+    const onTimer = (first?: boolean) => {
+      const interval = $("#auto-update-interval").val();
+      clearTimeout(updateTimer);
+      if (typeof interval === "string" && parseInt(interval) > 0) {
+        updateTimer = setTimeout(onTimer, parseInt(interval) * 1000);
+        if (!first) {
+          onUpdate();
+          console.log("auto-update", timeFormat(new Date()));
+        }
+      } else {
+        $("#auto-update-interval").val(0);
+      }
+    };
+    const choice = $("<select id='auto-update-interval'>");
+    for (const [name, value] of options) {
+      choice.append($("<option>").val(value).text(name));
+    }
+    choice.on("input", () => onTimer(true));
+    return $("<div>").css("display", "inline-block").append(choice);
+  };
+
   GM_registerMenuCommand("履歴削除", () => {
     GM_deleteValue("cat");
     GM_deleteValue("update");
@@ -286,41 +319,6 @@
       }
     }
 
-    const timeFormat = (date: Date): string => {
-      const year = date.getFullYear().toString();
-      const month = date.getMonth().toString().padStart(2, "0");
-      const day = date.getDay().toString().padStart(2, "0");
-      const hours = date.getHours().toString().padStart(2, "0");
-      const minutes = date.getMinutes().toString().padStart(2, "0");
-      const seconds = date.getSeconds().toString().padStart(2, "0");
-      return year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
-    };
-
-    const autoUpdateInput = (table: CatTable) => {
-      let updateTimer: number;
-      const onTimer = (first?: boolean) => {
-        const interval = $("#auto-update-interval").val();
-        clearTimeout(updateTimer);
-        if (typeof interval === "string" && parseInt(interval) > 0) {
-          updateTimer = setTimeout(onTimer, parseInt(interval) * 1000);
-          if (!first) {
-            table.reload(false);
-            console.log("auto-update", timeFormat(new Date()));
-          }
-        } else {
-          $("#auto-update-interval").val(0);
-        }
-      };
-      const choice = $("<select id='auto-update-interval'>").append(
-        $("<option value='0'>").text("Off"),
-        $("<option value='30'>").text("30sec"),
-        $("<option value='60'>").text("1min"),
-        $("<option value='180'>").text("3min")
-      );
-      const check = $("<div>").css("display", "inline-block").append(choice.on("input", () => onTimer(true)));
-      return check;
-    };
-
     const initialize = () => {
       const input = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
       const button = $("<input type='button' value='更新'>").on("click", () => {
@@ -328,7 +326,7 @@
       });
       const result = new FindResult();
       const table = new CatTable(input, result);
-      const check = autoUpdateInput(table);
+      const check = autoUpdateInput(() => table.reload(false), ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
 
       $("table#cattable").before(
         $("<p>"),
@@ -447,7 +445,7 @@
     const makeCommands = () => {
       $("body").append(
         $("<div id='commands'>").append(
-          $("<a id='gallery-button'>")
+          $("<a class='cornar-first' id='gallery-button'>")
             .text("画像一覧")
             .on("click", (e) => {
               if (toggleButton(e)) {
@@ -478,7 +476,7 @@
                 ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
               }
             }),
-          $("<a>")
+          $("<a class='cornar-last'>")
             .text("ツリー表示")
             .on("click", (e) => {
               if (toggleButton(e)) {
@@ -486,7 +484,9 @@
               } else {
                 makeFlatView();
               }
-            })
+            }),
+          " ",
+          autoUpdateInput(() => $("#contres > a").trigger("click"), ["OFF", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])
         )
       );
     };

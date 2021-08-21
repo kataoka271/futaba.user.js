@@ -22,10 +22,10 @@
 #commands a:hover {
   color: rgb(200, 0, 0);
 }
-#commands a:first-child {
+#commands a.cornar-first {
   border-radius: 5px / 20% 0 0 20%;
 }
-#commands a:last-child {
+#commands a.cornar-last {
   border-radius: 5px / 0 20% 20% 0;
 }
 #commands a.enable {
