@@ -539,39 +539,35 @@
         saveCatalog(newcat, "1");
       });
 
-      let timer: { set: boolean; id?: number } = { set: false };
-
-      const checkAndUpdate = (count?: number) => {
-        timer.set = false;
-        const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
-        if (res.length === cat[key].readres) {
-          if (count != null && count > 0) {
-            timer = { set: true, id: setTimeout(checkAndUpdate, 1000, count - 1) };
+      const startWatchUpdate = () => {
+        const observer = new MutationObserver((mutationsList, observer) => {
+          const added: HTMLElement[] = [];
+          for (const mutation of mutationsList) {
+            if (mutation.type === "childList") {
+              mutation.addedNodes.forEach((e) => {
+                if (e instanceof HTMLTableElement) {
+                  added.push(e);
+                }
+              });
+            }
           }
-          return;
-        }
-        res.parent().removeClass("resnew");
-        res
-          .filter((i, e) => {
-            return e.textContent != null && parseInt(e.textContent) > cat[key].readres;
-          })
-          .parent()
-          .addClass("resnew");
-        cat[key].res = res.length;
-        cat[key].readres = res.length;
-        const newcat: Catalog = loadCatalog();
-        newcat[key] = cat[key];
-        saveCatalog(newcat, "1");
+          if (added.length > 0) {
+            console.log(added.length + " res is added");
+            const res = $("div.thre table > tbody > tr > td.rtd");
+            res.removeClass("resnew");
+            $(added).find("tbody > tr > td.rtd").addClass("resnew");
+            cat[key].res = res.length;
+            cat[key].readres = res.length;
+            const newcat: Catalog = loadCatalog();
+            newcat[key] = cat[key];
+            saveCatalog(newcat, "1");
+          }
+        });
+        observer.observe($("div.thre").get(0), { childList: true });
       };
 
-      $("#contres > a").on("click", () => {
-        if (timer.set) {
-          return;
-        }
-        timer = { set: true, id: setTimeout(checkAndUpdate, 2000, 2) };
-      });
-
       makeCommands();
+      startWatchUpdate();
     };
 
     initialize();
