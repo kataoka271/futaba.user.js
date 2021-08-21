@@ -41,16 +41,21 @@
         const seconds = date.getSeconds().toString().padStart(2, "0");
         return year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
     };
-    const autoUpdateInput = (onUpdate, ...options) => {
-        let updateTimer;
+    const autoUpdateInput = (handler, ...options) => {
+        let timer;
         const onTimer = (first) => {
-            const interval = $("#auto-update-interval").val();
-            clearTimeout(updateTimer);
-            if (typeof interval === "string" && parseInt(interval) > 0) {
-                updateTimer = setTimeout(onTimer, parseInt(interval) * 1000);
-                if (!first) {
-                    onUpdate();
-                    console.log("auto-update", timeFormat(new Date()));
+            const value = $("#auto-update-interval").val();
+            clearTimeout(timer);
+            if (typeof value === "string") {
+                const interval = parseInt(value) * 1000;
+                if (interval > 0) {
+                    timer = setTimeout(onTimer, interval);
+                    if (!first) {
+                        if (handler.onUpdate) {
+                            handler.onUpdate(interval);
+                        }
+                        console.log("auto-update", timeFormat(new Date()));
+                    }
                 }
             }
             else {
@@ -61,7 +66,15 @@
         for (const [name, value] of options) {
             choice.append($("<option>").val(value).text(name));
         }
-        choice.on("input", () => onTimer(true));
+        choice.on("input", function () {
+            onTimer(true);
+            if (handler.onSelect) {
+                const value = $(this).val();
+                if (typeof value === "string") {
+                    handler.onSelect([$("option:checked", this).text(), parseInt(value)]);
+                }
+            }
+        });
         return $("<div>").css("display", "inline-block").append(choice);
     };
     GM_registerMenuCommand("履歴削除", () => {
@@ -306,7 +319,7 @@ td.catup .resnum {
             });
             const result = new FindResult();
             const table = new CatTable(input, result);
-            const check = autoUpdateInput(() => table.reload(false), ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+            const check = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
             $("table#cattable").before($("<p>"), $('<div style="text-align:center">').append(input, " ", button, " ", check), $("<p>"), result.table(), $("<p>"));
             table.update();
             $(window).on("unload", () => {
@@ -457,6 +470,36 @@ td.catup .resnum {
             });
             $("div.thre > span.maxres").after(array);
         };
+        class AutoScroller {
+            constructor() {
+                this._timer = 0;
+                this._dx = 0;
+                this._dy = 8;
+                this._speed = 200;
+            }
+            start() {
+                if (this._timer > 0) {
+                    return;
+                }
+                this._timer = setInterval(() => {
+                    scrollBy({ left: this._dx, top: this._dy, behavior: "smooth" });
+                }, this._speed);
+            }
+            stop() {
+                clearInterval(this._timer);
+                this._timer = 0;
+            }
+            get running() {
+                return this._timer > 0;
+            }
+            set dy(v) {
+                this._dy = v;
+            }
+            set speed(v) {
+                this._speed = v;
+            }
+        }
+        const autoScr = new AutoScroller();
         const makeCommands = () => {
             $("body").append($("<div id='commands'>").append($("<a class='cornar-first' id='gallery-button'>")
                 .text("画像一覧")
@@ -498,7 +541,18 @@ td.catup .resnum {
                 else {
                     makeFlatView();
                 }
-            }), " ", autoUpdateInput(() => $("#contres > a").trigger("click"), ["OFF", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])));
+            }), " ", autoUpdateInput({
+                onUpdate: () => $("#contres > a").trigger("click"),
+                onSelect: (option) => {
+                    console.log("auto-update:", option);
+                    if (option[0] === "OFF") {
+                        autoScr.stop();
+                    }
+                    else {
+                        autoScr.start();
+                    }
+                },
+            }, ["OFF", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])));
         };
         const initialize = () => {
             const root = $("div.thre");
