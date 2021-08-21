@@ -459,41 +459,35 @@
 
     class AutoScroller {
       _timer: number;
-      _dx: number;
-      _dy: number;
-      _speed: number;
+      dx: number;
+      dy: number;
+      tm: number;
 
       constructor() {
         this._timer = 0;
-        this._dx = 0;
-        this._dy = 8;
-        this._speed = 200;
+        this.dx = 0;
+        this.dy = 8;
+        this.tm = 200;
       }
 
       start() {
         if (this._timer > 0) {
           return;
         }
-        this._timer = setInterval(() => {
-          scrollBy({ left: this._dx, top: this._dy, behavior: "smooth" });
-        }, this._speed);
+        const onTimeout = () => {
+          scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+          this._timer = setTimeout(onTimeout, this.tm);
+        };
+        this._timer = setTimeout(() => onTimeout(), this.tm);
       }
 
       stop() {
-        clearInterval(this._timer);
+        clearTimeout(this._timer);
         this._timer = 0;
       }
 
       get running(): boolean {
         return this._timer > 0;
-      }
-
-      set dy(v: number) {
-        this._dy = v;
-      }
-
-      set speed(v: number) {
-        this._speed = v;
       }
     }
 
@@ -556,12 +550,40 @@
               },
             },
             ["OFF", 0],
+            ["Auto", 0],
             ["15sec", 15],
             ["30sec", 30],
             ["1min", 60]
           )
         )
       );
+    };
+
+    const startWatchUpdate = (cat: Catalog, key: string) => {
+      const observer = new MutationObserver((mutationsList, observer) => {
+        const added: HTMLElement[] = [];
+        for (const mutation of mutationsList) {
+          if (mutation.type === "childList") {
+            mutation.addedNodes.forEach((e) => {
+              if (e instanceof HTMLTableElement) {
+                added.push(e);
+              }
+            });
+          }
+        }
+        if (added.length > 0) {
+          console.log(added.length + " res is added");
+          const res = $("div.thre table > tbody > tr > td.rtd");
+          res.removeClass("resnew");
+          $(added).find("tbody > tr > td.rtd").addClass("resnew");
+          cat[key].res = res.length;
+          cat[key].readres = res.length;
+          const newcat: Catalog = loadCatalog();
+          newcat[key] = cat[key];
+          saveCatalog(newcat, "1");
+        }
+      });
+      observer.observe($("div.thre").get(0), { childList: true });
     };
 
     const initialize = () => {
@@ -612,35 +634,24 @@
         saveCatalog(newcat, "1");
       });
 
-      const startWatchUpdate = () => {
-        const observer = new MutationObserver((mutationsList, observer) => {
-          const added: HTMLElement[] = [];
-          for (const mutation of mutationsList) {
-            if (mutation.type === "childList") {
-              mutation.addedNodes.forEach((e) => {
-                if (e instanceof HTMLTableElement) {
-                  added.push(e);
-                }
-              });
-            }
-          }
-          if (added.length > 0) {
-            console.log(added.length + " res is added");
-            const res = $("div.thre table > tbody > tr > td.rtd");
-            res.removeClass("resnew");
-            $(added).find("tbody > tr > td.rtd").addClass("resnew");
-            cat[key].res = res.length;
-            cat[key].readres = res.length;
-            const newcat: Catalog = loadCatalog();
-            newcat[key] = cat[key];
-            saveCatalog(newcat, "1");
-          }
-        });
-        observer.observe($("div.thre").get(0), { childList: true });
-      };
-
       makeCommands();
-      startWatchUpdate();
+      startWatchUpdate(cat, key);
+
+      $(window).on("keydown", (e) => {
+        if (e.key === "a" && autoScr.tm / 2 >= 100) {
+          autoScr.tm /= 2;
+          console.log(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+        } else if (e.key === "A") {
+          autoScr.tm *= 2;
+          console.log(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+        } else if (e.key === "v") {
+          autoScr.dy *= 2;
+          console.log(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+        } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
+          autoScr.dy /= 2;
+          console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+        }
+      });
     };
 
     initialize();
