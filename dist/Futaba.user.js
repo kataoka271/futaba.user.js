@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.8
+// @version      0.0.9
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -396,6 +396,18 @@ td.catup .resnum {
   width: auto;
   height: 300px;
 }
+#auto-scroll-status {
+  background-color: rgba(200, 200, 200, 0.8);
+  color: rgb(100, 100, 100);
+  font-size: 80%;
+  position: fixed;
+  bottom: 50px;
+  right: 10px;
+  z-index: 1000;
+  display: inline-block;
+  padding: 0.2em;
+  border-radius: 2px;
+}
 `);
         const toggleButton = (e) => {
             e.preventDefault();
@@ -502,6 +514,22 @@ td.catup .resnum {
             resume() {
                 this._pause = false;
             }
+            status(text, sticky) {
+                if (!this._status) {
+                    this._status = $("<div id='auto-scroll-status'>");
+                }
+                this._status.stop(true, true);
+                if (text != null) {
+                    this._status.text(text).show();
+                    if (!sticky) {
+                        this._status.fadeOut(2000);
+                    }
+                }
+                else {
+                    this._status.hide();
+                }
+                return this._status;
+            }
             get paused() {
                 return this._pause;
             }
@@ -556,9 +584,11 @@ td.catup .resnum {
                     console.log("auto-update:", option);
                     if (option[0] === "OFF") {
                         autoScr.stop();
+                        autoScr.status();
                     }
                     else {
                         autoScr.start();
+                        autoScr.status("auto-scroll started");
                     }
                 },
             }, ["OFF", 0], ["Auto", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])));
@@ -593,26 +623,28 @@ td.catup .resnum {
             $(window).on("keydown", (e) => {
                 if (e.key === "a" && autoScr.tm / 2 >= 100) {
                     autoScr.tm /= 2;
-                    console.log(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                    autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
                 else if (e.key === "A") {
                     autoScr.tm *= 2;
-                    console.log(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                    autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
                 else if (e.key === "v") {
                     autoScr.dy *= 2;
-                    console.log(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                    autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
                 else if (e.key === "V" && autoScr.dy / 2 >= 1) {
                     autoScr.dy /= 2;
-                    console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                    autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
                 else if (e.key === "s") {
                     if (!autoScr.paused) {
                         autoScr.pause();
+                        autoScr.status("auto-scroll paused", true);
                     }
                     else {
                         autoScr.resume();
+                        autoScr.status("auto-scroll started");
                     }
                 }
             });
@@ -661,6 +693,7 @@ td.catup .resnum {
                 saveCatalog(newcat, "1");
             });
             const autoScr = new AutoScroller();
+            $("body").append(autoScr.status());
             addCommands(autoScr);
             addHotkeys(autoScr);
             watchUpdate(cat, key);
