@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.7
+// @version      0.0.8
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -341,11 +341,11 @@
       });
       const result = new FindResult();
       const table = new CatTable(input, result);
-      const check = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+      const select = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
 
       $("table#cattable").before(
         $("<p>"),
-        $('<div style="text-align:center">').append(input, " ", button, " ", check),
+        $('<div style="text-align:center">').append(input, " ", button, " ", select),
         $("<p>"),
         result.table(),
         $("<p>")
@@ -509,9 +509,7 @@
       }
     }
 
-    const autoScr = new AutoScroller();
-
-    const addCommands = () => {
+    const addCommands = (autoScr: AutoScroller) => {
       $("body").append(
         $("<div id='commands'>").append(
           $("<a class='cornar-first' id='gallery-button'>")
@@ -604,7 +602,7 @@
       observer.observe($("div.thre").get(0), { childList: true });
     };
 
-    const addHotkeys = () => {
+    const addHotkeys = (autoScr: AutoScroller) => {
       $(window).on("keydown", (e) => {
         if (e.key === "a" && autoScr.tm / 2 >= 100) {
           autoScr.tm /= 2;
@@ -676,8 +674,10 @@
         saveCatalog(newcat, "1");
       });
 
-      addCommands();
-      addHotkeys();
+      const autoScr = new AutoScroller();
+
+      addCommands(autoScr);
+      addHotkeys(autoScr);
       watchUpdate(cat, key);
     };
 
