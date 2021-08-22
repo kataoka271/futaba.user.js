@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.5
+// @version      0.0.6
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -496,7 +496,7 @@ td.catup .resnum {
             }
         }
         const autoScr = new AutoScroller();
-        const makeCommands = () => {
+        const addCommands = () => {
             $("body").append($("<div id='commands'>").append($("<a class='cornar-first' id='gallery-button'>")
                 .text("画像一覧")
                 .on("click", (e) => {
@@ -550,7 +550,7 @@ td.catup .resnum {
                 },
             }, ["OFF", 0], ["Auto", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])));
         };
-        const startWatchUpdate = (cat, key) => {
+        const watchUpdate = (cat, key) => {
             const observer = new MutationObserver((mutationsList, observer) => {
                 const added = [];
                 for (const mutation of mutationsList) {
@@ -575,6 +575,26 @@ td.catup .resnum {
                 }
             });
             observer.observe($("div.thre").get(0), { childList: true });
+        };
+        const addHotkeys = () => {
+            $(window).on("keydown", (e) => {
+                if (e.key === "a" && autoScr.tm / 2 >= 100) {
+                    autoScr.tm /= 2;
+                    console.log(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "A") {
+                    autoScr.tm *= 2;
+                    console.log(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "v") {
+                    autoScr.dy *= 2;
+                    console.log(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "V" && autoScr.dy / 2 >= 1) {
+                    autoScr.dy /= 2;
+                    console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+            });
         };
         const initialize = () => {
             const root = $("div.thre");
@@ -619,26 +639,9 @@ td.catup .resnum {
                 newcat[key] = cat[key];
                 saveCatalog(newcat, "1");
             });
-            makeCommands();
-            startWatchUpdate(cat, key);
-            $(window).on("keydown", (e) => {
-                if (e.key === "a" && autoScr.tm / 2 >= 100) {
-                    autoScr.tm /= 2;
-                    console.log(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-                }
-                else if (e.key === "A") {
-                    autoScr.tm *= 2;
-                    console.log(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-                }
-                else if (e.key === "v") {
-                    autoScr.dy *= 2;
-                    console.log(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-                }
-                else if (e.key === "V" && autoScr.dy / 2 >= 1) {
-                    autoScr.dy /= 2;
-                    console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-                }
-            });
+            addCommands();
+            addHotkeys();
+            watchUpdate(cat, key);
         };
         initialize();
     };
