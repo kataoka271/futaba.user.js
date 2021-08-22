@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.6
+// @version      0.0.7
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -462,12 +462,14 @@
       dx: number;
       dy: number;
       tm: number;
+      _pause: boolean;
 
       constructor() {
         this._timer = 0;
         this.dx = 0;
         this.dy = 8;
         this.tm = 200;
+        this._pause = false;
       }
 
       start() {
@@ -475,15 +477,31 @@
           return;
         }
         const onTimeout = () => {
-          scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+          if (!this._pause) {
+            scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+          }
           this._timer = setTimeout(onTimeout, this.tm);
         };
+        this._pause = false;
         this._timer = setTimeout(() => onTimeout(), this.tm);
       }
 
       stop() {
         clearTimeout(this._timer);
+        this._pause = false;
         this._timer = 0;
+      }
+
+      pause() {
+        this._pause = true;
+      }
+
+      resume() {
+        this._pause = false;
+      }
+
+      get paused(): boolean {
+        return this._pause;
       }
 
       get running(): boolean {
@@ -600,6 +618,12 @@
         } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
           autoScr.dy /= 2;
           console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+        } else if (e.key === "s") {
+          if (!autoScr.paused) {
+            autoScr.pause();
+          } else {
+            autoScr.resume();
+          }
         }
       });
     };

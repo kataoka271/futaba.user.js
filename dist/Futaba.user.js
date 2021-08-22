@@ -476,20 +476,34 @@ td.catup .resnum {
                 this.dx = 0;
                 this.dy = 8;
                 this.tm = 200;
+                this._pause = false;
             }
             start() {
                 if (this._timer > 0) {
                     return;
                 }
                 const onTimeout = () => {
-                    scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+                    if (!this._pause) {
+                        scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+                    }
                     this._timer = setTimeout(onTimeout, this.tm);
                 };
+                this._pause = false;
                 this._timer = setTimeout(() => onTimeout(), this.tm);
             }
             stop() {
                 clearTimeout(this._timer);
+                this._pause = false;
                 this._timer = 0;
+            }
+            pause() {
+                this._pause = true;
+            }
+            resume() {
+                this._pause = false;
+            }
+            get paused() {
+                return this._pause;
             }
             get running() {
                 return this._timer > 0;
@@ -593,6 +607,14 @@ td.catup .resnum {
                 else if (e.key === "V" && autoScr.dy / 2 >= 1) {
                     autoScr.dy /= 2;
                     console.log(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "s") {
+                    if (!autoScr.paused) {
+                        autoScr.pause();
+                    }
+                    else {
+                        autoScr.resume();
+                    }
                 }
             });
         };
