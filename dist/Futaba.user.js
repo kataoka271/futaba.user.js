@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.9
+// @version      0.0.10
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -245,40 +245,16 @@ td.catup .resnum {
                 this._table.hide();
             }
         }
-        class Protect {
-            constructor(timeout) {
-                this._inputTimeout = timeout;
-                this._inputTime = Date.now();
-                this._timer = { set: false };
-            }
-            execute(func) {
-                if (this._timer.set) {
-                    clearTimeout(this._timer.id);
-                    this._timer.set = false;
-                }
-                if (Date.now() - this._inputTime > this._inputTimeout) {
-                    func();
-                }
-                else {
-                    this._timer.id = setTimeout(() => {
-                        this.execute(func);
-                    }, this._inputTimeout);
-                    this._timer.set = true;
-                }
-                this._inputTime = Date.now();
-            }
-        }
         class CatTable {
             constructor(input, result) {
                 this._input = input;
                 this._result = result;
                 this._cat = {};
                 this._oldcat = {};
-                this._protect = new Protect(500);
+                let timer;
                 this._input.on("input", () => {
-                    this._protect.execute(() => {
-                        this.update();
-                    });
+                    clearTimeout(timer);
+                    timer = setTimeout(() => this.update(), 500);
                 });
             }
             update() {
@@ -405,7 +381,7 @@ td.catup .resnum {
   right: 10px;
   z-index: 1000;
   display: inline-block;
-  padding: 0.2em;
+  padding: 5px 10px;
   border-radius: 2px;
 }
 `);
@@ -494,14 +470,14 @@ td.catup .resnum {
                 if (this._timer > 0) {
                     return;
                 }
-                const onTimeout = () => {
-                    if (!this._pause) {
-                        scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
-                    }
-                    this._timer = setTimeout(onTimeout, this.tm);
-                };
                 this._pause = false;
-                this._timer = setTimeout(() => onTimeout(), this.tm);
+                this._timer = setTimeout(() => this.onTimer(), this.tm);
+            }
+            onTimer() {
+                if (!this._pause) {
+                    scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+                }
+                this._timer = setTimeout(() => this.onTimer(), this.tm);
             }
             stop() {
                 clearTimeout(this._timer);
@@ -518,11 +494,14 @@ td.catup .resnum {
                 if (!this._status) {
                     this._status = $("<div id='auto-scroll-status'>");
                 }
-                this._status.stop(true, true);
+                clearTimeout(this._toast);
                 if (text != null) {
-                    this._status.text(text).show();
+                    this._status.text(text).stop(true, false).fadeIn(0);
                     if (!sticky) {
-                        this._status.fadeOut(2000);
+                        this._toast = setTimeout(() => {
+                            if (this._status)
+                                this._status.fadeOut(2000);
+                        }, 3000);
                     }
                 }
                 else {
@@ -625,11 +604,11 @@ td.catup .resnum {
                     autoScr.tm /= 2;
                     autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
-                else if (e.key === "A") {
+                else if (e.key === "A" && autoScr.tm * 2 < 180000) {
                     autoScr.tm *= 2;
                     autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
-                else if (e.key === "v") {
+                else if (e.key === "v" && autoScr.dy * 2 < 10000) {
                     autoScr.dy *= 2;
                     autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }

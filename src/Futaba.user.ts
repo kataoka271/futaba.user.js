@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.9
+// @version      0.0.10
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -253,51 +253,21 @@
       }
     }
 
-    class Protect {
-      _inputTimeout: number;
-      _inputTime: number;
-      _timer: { set: boolean; id?: number };
-
-      constructor(timeout: number) {
-        this._inputTimeout = timeout;
-        this._inputTime = Date.now();
-        this._timer = { set: false };
-      }
-
-      execute(func: () => void) {
-        if (this._timer.set) {
-          clearTimeout(this._timer.id);
-          this._timer.set = false;
-        }
-        if (Date.now() - this._inputTime > this._inputTimeout) {
-          func();
-        } else {
-          this._timer.id = setTimeout(() => {
-            this.execute(func);
-          }, this._inputTimeout);
-          this._timer.set = true;
-        }
-        this._inputTime = Date.now();
-      }
-    }
-
     class CatTable {
       _input: JQuery<HTMLElement>;
       _result: FindResult;
       _cat: Catalog;
       _oldcat: Catalog;
-      _protect: Protect;
 
       constructor(input: JQuery<HTMLElement>, result: FindResult) {
         this._input = input;
         this._result = result;
         this._cat = {};
         this._oldcat = {};
-        this._protect = new Protect(500);
+        let timer: number;
         this._input.on("input", () => {
-          this._protect.execute(() => {
-            this.update();
-          });
+          clearTimeout(timer);
+          timer = setTimeout(() => this.update(), 500);
         });
       }
 
@@ -464,6 +434,7 @@
       tm: number;
       _pause: boolean;
       _status?: JQuery<HTMLElement>;
+      _toast?: number;
 
       constructor() {
         this._timer = 0;
@@ -477,14 +448,15 @@
         if (this._timer > 0) {
           return;
         }
-        const onTimeout = () => {
-          if (!this._pause) {
-            scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
-          }
-          this._timer = setTimeout(onTimeout, this.tm);
-        };
         this._pause = false;
-        this._timer = setTimeout(() => onTimeout(), this.tm);
+        this._timer = setTimeout(() => this.onTimer(), this.tm);
+      }
+
+      onTimer() {
+        if (!this._pause) {
+          scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
+        }
+        this._timer = setTimeout(() => this.onTimer(), this.tm);
       }
 
       stop() {
@@ -505,11 +477,13 @@
         if (!this._status) {
           this._status = $("<div id='auto-scroll-status'>");
         }
-        this._status.stop(true, true);
+        clearTimeout(this._toast);
         if (text != null) {
-          this._status.text(text).show();
+          this._status.text(text).stop(true, false).fadeIn(0);
           if (!sticky) {
-            this._status.fadeOut(2000);
+            this._toast = setTimeout(() => {
+              if (this._status) this._status.fadeOut(2000);
+            }, 3000);
           }
         } else {
           this._status.hide();
@@ -626,10 +600,10 @@
         if (e.key === "a" && autoScr.tm / 2 >= 100) {
           autoScr.tm /= 2;
           autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "A") {
+        } else if (e.key === "A" && autoScr.tm * 2 < 180000) {
           autoScr.tm *= 2;
           autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "v") {
+        } else if (e.key === "v" && autoScr.dy * 2 < 10000) {
           autoScr.dy *= 2;
           autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
         } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
