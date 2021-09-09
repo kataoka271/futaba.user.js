@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.11
+// @version      0.0.12
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -662,7 +662,9 @@ td.catup .resnum {
             }
             cat[key].readres = res.length;
             saveCatalog(cat, "1");
-            window.scrollTo(0, cat[key].offset);
+            if (cat[key].offset > 0) {
+                window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
+            }
             $(window).on("scroll", () => {
                 cat[key].offset = window.scrollY;
             });
