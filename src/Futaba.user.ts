@@ -254,18 +254,18 @@
     }
 
     class CatTable {
-      _input: JQuery<HTMLElement>;
+      _finder: JQuery<HTMLElement>;
       _result: FindResult;
       _cat: Catalog;
       _oldcat: Catalog;
 
-      constructor(input: JQuery<HTMLElement>, result: FindResult) {
-        this._input = input;
+      constructor(finder: JQuery<HTMLElement>, result: FindResult) {
+        this._finder = finder;
         this._result = result;
         this._cat = {};
         this._oldcat = {};
         let timer: number;
-        this._input.on("input", () => {
+        this._finder.on("input", () => {
           clearTimeout(timer);
           timer = setTimeout(() => this.update(), 500);
         });
@@ -279,7 +279,7 @@
         });
         this._result.hide();
         this._result.clear();
-        const keyword = this._input.val();
+        const keyword = this._finder.val();
         if (typeof keyword === "string" && keyword !== "") {
           this._result.append(findItemsText(keyword));
         } else {
@@ -305,17 +305,17 @@
     }
 
     const initialize = () => {
-      const input = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
+      const finder = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
       const button = $("<input type='button' value='更新'>").on("click", () => {
         table.reload();
       });
       const result = new FindResult();
-      const table = new CatTable(input, result);
+      const table = new CatTable(finder, result);
       const select = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
 
       $("table#cattable").before(
         $("<p>"),
-        $('<div style="text-align:center">').append(input, " ", button, " ", select),
+        $('<div style="text-align:center">').append(finder, " ", button, " ", select),
         $("<p>"),
         result.table(),
         $("<p>")
@@ -328,6 +328,9 @@
       });
 
       $(window).on("keydown", (e) => {
+        if (document.activeElement?.tagName === "INPUT") {
+          return;
+        }
         if (e.key === "r") {
           table.reload();
         }
@@ -597,6 +600,9 @@
 
     const addHotkeys = (autoScr: AutoScroller) => {
       $(window).on("keydown", (e) => {
+        if (document.activeElement?.tagName === "INPUT") {
+          return;
+        }
         if (e.key === "a" && autoScr.tm / 2 >= 100) {
           autoScr.tm /= 2;
           autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);

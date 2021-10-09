@@ -246,13 +246,13 @@ td.catup .resnum {
             }
         }
         class CatTable {
-            constructor(input, result) {
-                this._input = input;
+            constructor(finder, result) {
+                this._finder = finder;
                 this._result = result;
                 this._cat = {};
                 this._oldcat = {};
                 let timer;
-                this._input.on("input", () => {
+                this._finder.on("input", () => {
                     clearTimeout(timer);
                     timer = setTimeout(() => this.update(), 500);
                 });
@@ -265,7 +265,7 @@ td.catup .resnum {
                 });
                 this._result.hide();
                 this._result.clear();
-                const keyword = this._input.val();
+                const keyword = this._finder.val();
                 if (typeof keyword === "string" && keyword !== "") {
                     this._result.append(findItemsText(keyword));
                 }
@@ -289,19 +289,23 @@ td.catup .resnum {
             }
         }
         const initialize = () => {
-            const input = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
+            const finder = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
             const button = $("<input type='button' value='更新'>").on("click", () => {
                 table.reload();
             });
             const result = new FindResult();
-            const table = new CatTable(input, result);
+            const table = new CatTable(finder, result);
             const select = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-            $("table#cattable").before($("<p>"), $('<div style="text-align:center">').append(input, " ", button, " ", select), $("<p>"), result.table(), $("<p>"));
+            $("table#cattable").before($("<p>"), $('<div style="text-align:center">').append(finder, " ", button, " ", select), $("<p>"), result.table(), $("<p>"));
             table.update();
             $(window).on("unload", () => {
                 table.save();
             });
             $(window).on("keydown", (e) => {
+                var _a;
+                if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
+                    return;
+                }
                 if (e.key === "r") {
                     table.reload();
                 }
@@ -600,6 +604,10 @@ td.catup .resnum {
         };
         const addHotkeys = (autoScr) => {
             $(window).on("keydown", (e) => {
+                var _a;
+                if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
+                    return;
+                }
                 if (e.key === "a" && autoScr.tm / 2 >= 100) {
                     autoScr.tm /= 2;
                     autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
