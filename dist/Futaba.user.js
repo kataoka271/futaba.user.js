@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.12
+// @version      0.0.13
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -434,7 +434,7 @@ td.catup .resnum {
                 .css("overflow-y", "hidden")
                 .append($("<div id='gallery'>")
                 .append(img.parent().clone())
-                .on("click", (e) => {
+                .on("dblclick", (e) => {
                 if (e.target.tagName === "DIV") {
                     galleryDestroy();
                 }
