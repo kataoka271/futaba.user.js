@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.13
+// @version      0.0.15
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -108,7 +108,7 @@
 @@include("Futaba-cat.user.css")
 `);
 
-    function normalize(text: string): string {
+    function normalizeText(text: string): string {
       // prettier-ignore
       const kanaMap: { [name: string]: string } = {
         ｶﾞ: "ガ", ｷﾞ: "ギ", ｸﾞ: "グ", ｹﾞ: "ゲ", ｺﾞ: "ゴ", ｻﾞ: "ザ", ｼﾞ: "ジ", ｽﾞ: "ズ", ｾﾞ: "ゼ", ｿﾞ: "ゾ",
@@ -134,13 +134,14 @@
         .replace(/ﾞ/g, "゛")
         .replace(/ﾟ/g, "゜");
     }
+
     const findItemsText = (text: string): JQuery<HTMLElement> => {
-      const text2 = normalize(text);
+      const text2 = normalizeText(text);
       return $("table#cattable td").filter((i, e) => {
         if (!e.textContent) {
           return false;
         }
-        return normalize(e.textContent).includes(text2);
+        return normalizeText(e.textContent).includes(text2);
       });
     };
 
@@ -361,9 +362,13 @@
         if (document.activeElement?.tagName === "INPUT") {
           return;
         }
-        if (e.key === "r") {
+        if (e.key === "s") {
           table.reload();
+        } else if (e.key === "/") {
+          finder.trigger("focus");
         }
+        e.preventDefault();
+        e.stopPropagation();
       });
 
       setInterval(() => {

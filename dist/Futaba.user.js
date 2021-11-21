@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.13
+// @version      0.0.15
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -109,7 +109,7 @@ td.catup .resnum {
   color: #f02020;
 }
 `);
-        function normalize(text) {
+        function normalizeText(text) {
             // prettier-ignore
             const kanaMap = {
                 ｶﾞ: "ガ", ｷﾞ: "ギ", ｸﾞ: "グ", ｹﾞ: "ゲ", ｺﾞ: "ゴ", ｻﾞ: "ザ", ｼﾞ: "ジ", ｽﾞ: "ズ", ｾﾞ: "ゼ", ｿﾞ: "ゾ",
@@ -136,12 +136,12 @@ td.catup .resnum {
                 .replace(/ﾟ/g, "゜");
         }
         const findItemsText = (text) => {
-            const text2 = normalize(text);
+            const text2 = normalizeText(text);
             return $("table#cattable td").filter((i, e) => {
                 if (!e.textContent) {
                     return false;
                 }
-                return normalize(e.textContent).includes(text2);
+                return normalizeText(e.textContent).includes(text2);
             });
         };
         const findItemsHist = (cat) => {
@@ -335,9 +335,14 @@ td.catup .resnum {
                 if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
                     return;
                 }
-                if (e.key === "r") {
+                if (e.key === "s") {
                     table.reload();
                 }
+                else if (e.key === "/") {
+                    finder.trigger("focus");
+                }
+                e.preventDefault();
+                e.stopPropagation();
             });
             setInterval(() => {
                 if (readUpdate() === "1") {
