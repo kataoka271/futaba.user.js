@@ -425,7 +425,7 @@ td.catup .resnum {
 `);
         const toggleButton = (e) => {
             e.preventDefault();
-            return $(e.target).toggleClass("enable").is(".enable");
+            return $(e.target).toggleClass("enable").hasClass("enable");
         };
         const ancestor = (td) => {
             return td.parent().parent().parent();
@@ -457,44 +457,57 @@ td.catup .resnum {
         };
         const makeTreeView = () => {
             let quoteList = [];
-            const res = $("div.thre > table");
-            for (let i = res.length - 1; i >= 0; i--) {
-                const table = res[i];
+            $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($("<span id='resnew'>"));
+            $($("div.thre > table").get().reverse()).each((i, table) => {
                 const td = $("td.rtd", table).first();
                 const text = $("blockquote, a, span", td)
                     .contents()
                     .filter((i, e) => {
-                    return e.nodeType === 3 && e instanceof Text && e.data !== "";
+                    return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
                 })
                     .text();
-                const quote = $("blockquote > font", td).last();
+                const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
+                let tdCloned = null;
                 quoteList = quoteList.filter((item) => {
-                    if (!text.includes(item.q)) {
+                    if (!text.includes(item.quot)) {
                         return true;
                     }
                     else {
-                        td.append(item.e);
+                        if (!td.hasClass("resnew") && item.resnew) {
+                            if (tdCloned == null) {
+                                tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
+                            }
+                            tdCloned.append(item.elem);
+                        }
+                        else {
+                            td.append(item.elem);
+                        }
                         return false;
                     }
                 });
                 if (quote.length > 0) {
                     const mo = />([^>]+)$/.exec(quote.text());
                     if (mo != null) {
-                        quoteList.unshift({ q: mo[1], e: table }); // remove ">" appeared at the first of quote string
+                        quoteList.unshift({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
                     }
                 }
-            }
+            });
         };
         const makeFlatView = () => {
             const array = [];
-            $("div.thre > table td.rtd > span:first-child").each((i, span) => {
-                var _a, _b, _c;
-                const table = (_c = (_b = (_a = span.parentNode) === null || _a === void 0 ? void 0 : _a.parentNode) === null || _b === void 0 ? void 0 : _b.parentNode) === null || _c === void 0 ? void 0 : _c.parentNode;
-                if (table != null && table instanceof HTMLElement && span.textContent != null) {
-                    array[parseInt(span.textContent)] = table;
+            $("div.thre table > tbody > tr > td.rtd > span:first-child").each((i, e) => {
+                const span = $(e);
+                const resnum = parseInt(span.text() || "0");
+                const table = span.parent().parent().parent().parent();
+                if (table.hasClass("cloned") || array[resnum] != null) {
+                    table.remove();
+                }
+                else {
+                    array[resnum] = table;
                 }
             });
             $("div.thre > span.maxres").after(array);
+            $("span#resnew").remove();
         };
         class AutoScroller {
             constructor() {
@@ -580,11 +593,11 @@ td.catup .resnum {
                 .on("click", (e) => {
                 if (toggleButton(e)) {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
-                    ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "none");
+                    ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
                 }
                 else {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
-                    ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
+                    ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
                 }
             }), $("<a class='cornar-last'>")
                 .text("ツリー表示")
@@ -611,30 +624,35 @@ td.catup .resnum {
             }, ["OFF", 0], ["Auto", 0], ["15sec", 15], ["30sec", 30], ["1min", 60])));
         };
         const watchUpdate = (cat, key) => {
-            const observer = new MutationObserver((mutationsList, observer) => {
-                const added = [];
-                for (const mutation of mutationsList) {
-                    if (mutation.type === "childList") {
-                        mutation.addedNodes.forEach((e) => {
-                            if (e instanceof HTMLTableElement) {
-                                added.push(e);
-                            }
-                        });
+            function onTimer(retry) {
+                const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
+                const resnew = res.filter((i, e) => {
+                    var _a;
+                    const resnum = parseInt((_a = e.textContent) !== null && _a !== void 0 ? _a : "0");
+                    const res = $(e).parent();
+                    if (resnum > cat[key].readres) {
+                        res.addClass("resnew");
+                        return true;
                     }
-                }
-                if (added.length > 0) {
-                    console.log(added.length + " res is added");
-                    const res = $("div.thre table > tbody > tr > td.rtd");
-                    res.removeClass("resnew");
-                    $(added).find("tbody > tr > td.rtd").addClass("resnew");
+                    else {
+                        res.removeClass("resnew");
+                        return false;
+                    }
+                });
+                if (resnew.length > 0) {
                     cat[key].res = res.length;
                     cat[key].readres = res.length;
                     const newcat = loadCatalog();
                     newcat[key] = cat[key];
                     saveCatalog(newcat, "1");
                 }
+                else if (retry > 0) {
+                    setTimeout(onTimer, 100, retry - 1);
+                }
+            }
+            $("#contres > a").on("click", (e) => {
+                setTimeout(onTimer, 100, 10);
             });
-            observer.observe($("div.thre").get(0), { childList: true });
         };
         const addHotkeys = (autoScr) => {
             $(window).on("keydown", (e) => {

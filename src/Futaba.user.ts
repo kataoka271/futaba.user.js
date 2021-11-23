@@ -388,7 +388,7 @@
 
     const toggleButton = (e: JQuery.TriggeredEvent) => {
       e.preventDefault();
-      return $(e.target).toggleClass("enable").is(".enable");
+      return $(e.target).toggleClass("enable").hasClass("enable");
     };
 
     const ancestor = (td: JQuery<HTMLElement>): JQuery<HTMLElement> => {
@@ -425,44 +425,56 @@
     };
 
     const makeTreeView = () => {
-      let quoteList: { q: string; e: HTMLElement }[] = [];
-      const res = $("div.thre > table");
-      for (let i = res.length - 1; i >= 0; i--) {
-        const table = res[i];
+      let quoteList: { quot: string; elem: HTMLElement; resnew: boolean }[] = [];
+      $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($("<span id='resnew'>"));
+      $($("div.thre > table").get().reverse()).each((i, table) => {
         const td = $("td.rtd", table).first();
         const text = $("blockquote, a, span", td)
           .contents()
           .filter((i, e) => {
-            return e.nodeType === 3 && e instanceof Text && e.data !== "";
+            return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
           })
           .text();
-        const quote = $("blockquote > font", td).last();
+        const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
+        let tdCloned: JQuery<HTMLElement> | null = null;
         quoteList = quoteList.filter((item) => {
-          if (!text.includes(item.q)) {
+          if (!text.includes(item.quot)) {
             return true;
           } else {
-            td.append(item.e);
+            if (!td.hasClass("resnew") && item.resnew) {
+              if (tdCloned == null) {
+                tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
+              }
+              tdCloned.append(item.elem);
+            } else {
+              td.append(item.elem);
+            }
             return false;
           }
         });
         if (quote.length > 0) {
           const mo = />([^>]+)$/.exec(quote.text());
           if (mo != null) {
-            quoteList.unshift({ q: mo[1], e: table }); // remove ">" appeared at the first of quote string
+            quoteList.unshift({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
           }
         }
-      }
+      });
     };
 
     const makeFlatView = () => {
-      const array: HTMLElement[] = [];
-      $("div.thre > table td.rtd > span:first-child").each((i, span) => {
-        const table = span.parentNode?.parentNode?.parentNode?.parentNode;
-        if (table != null && table instanceof HTMLElement && span.textContent != null) {
-          array[parseInt(span.textContent)] = table;
+      const array: JQuery<HTMLElement>[] = [];
+      $("div.thre table > tbody > tr > td.rtd > span:first-child").each((i, e) => {
+        const span = $(e);
+        const resnum = parseInt(span.text() || "0");
+        const table = span.parent().parent().parent().parent();
+        if (table.hasClass("cloned") || array[resnum] != null) {
+          table.remove();
+        } else {
+          array[resnum] = table;
         }
       });
       $("div.thre > span.maxres").after(array);
+      $("span#resnew").remove();
     };
 
     class AutoScroller {
@@ -566,10 +578,10 @@
             .on("click", (e) => {
               if (toggleButton(e)) {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "none");
+                ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
               } else {
                 const res = $("div.thre > table > tbody > tr > td.rtd");
-                ancestor(res.filter((i, e) => !$(e).is(".resnew"))).css("display", "");
+                ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
               }
             }),
           $("<a class='cornar-last'>")
@@ -607,30 +619,32 @@
     };
 
     const watchUpdate = (cat: Catalog, key: string) => {
-      const observer = new MutationObserver((mutationsList, observer) => {
-        const added: HTMLElement[] = [];
-        for (const mutation of mutationsList) {
-          if (mutation.type === "childList") {
-            mutation.addedNodes.forEach((e) => {
-              if (e instanceof HTMLTableElement) {
-                added.push(e);
-              }
-            });
+      function onTimer(retry: number) {
+        const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
+        const resnew = res.filter((i, e) => {
+          const resnum = parseInt(e.textContent ?? "0");
+          const res = $(e).parent();
+          if (resnum > cat[key].readres) {
+            res.addClass("resnew");
+            return true;
+          } else {
+            res.removeClass("resnew");
+            return false;
           }
-        }
-        if (added.length > 0) {
-          console.log(added.length + " res is added");
-          const res = $("div.thre table > tbody > tr > td.rtd");
-          res.removeClass("resnew");
-          $(added).find("tbody > tr > td.rtd").addClass("resnew");
+        });
+        if (resnew.length > 0) {
           cat[key].res = res.length;
           cat[key].readres = res.length;
           const newcat: Catalog = loadCatalog();
           newcat[key] = cat[key];
           saveCatalog(newcat, "1");
+        } else if (retry > 0) {
+          setTimeout(onTimer, 100, retry - 1);
         }
+      }
+      $("#contres > a").on("click", (e) => {
+        setTimeout(onTimer, 100, 10);
       });
-      observer.observe($("div.thre").get(0), { childList: true });
     };
 
     const addHotkeys = (autoScr: AutoScroller) => {
