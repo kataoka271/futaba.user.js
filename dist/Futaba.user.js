@@ -477,10 +477,10 @@ td.catup .resnum {
                             if (tdCloned == null) {
                                 tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
                             }
-                            tdCloned.append(item.elem);
+                            tdCloned.children("blockquote").first().after(item.elem);
                         }
                         else {
-                            td.append(item.elem);
+                            td.children("blockquote").first().after(item.elem);
                         }
                         return false;
                     }
@@ -488,7 +488,7 @@ td.catup .resnum {
                 if (quote.length > 0) {
                     const mo = />([^>]+)$/.exec(quote.text());
                     if (mo != null) {
-                        quoteList.unshift({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
+                        quoteList.push({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
                     }
                 }
             });
