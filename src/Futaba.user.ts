@@ -367,8 +367,6 @@
         } else if (e.key === "/") {
           finder.trigger("focus");
         }
-        e.preventDefault();
-        e.stopPropagation();
       });
 
       setInterval(() => {

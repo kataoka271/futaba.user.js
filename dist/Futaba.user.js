@@ -341,8 +341,6 @@ td.catup .resnum {
                 else if (e.key === "/") {
                     finder.trigger("focus");
                 }
-                e.preventDefault();
-                e.stopPropagation();
             });
             setInterval(() => {
                 if (readUpdate() === "1") {
