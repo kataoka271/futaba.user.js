@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.15
+// @version      0.0.16
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -44,59 +44,69 @@
     GM_setValue("update", update ?? "0");
   };
 
-  const readUpdate = (): string => {
+  const readClearUpdateFlag = (): string => {
     const update = GM_getValue("update", "0");
     GM_setValue("update", "0");
     return update;
   };
 
-  const timeFormat = (date: Date): string => {
-    const year = date.getFullYear().toString();
-    const month = date.getMonth().toString().padStart(2, "0");
-    const day = date.getDay().toString().padStart(2, "0");
-    const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = date.getMinutes().toString().padStart(2, "0");
-    const seconds = date.getSeconds().toString().padStart(2, "0");
-    return year + "/" + month + "/" + day + " " + hours + ":" + minutes + ":" + seconds;
-  };
+  type AutoUpdateEventHandler = { onUpdate: (interval: number) => void; onSelect: (option: [string, number]) => void };
 
-  type AutoUpdateEventHandler = { onUpdate?: (interval: number) => void; onSelect?: (option: [string, number]) => void };
+  class AutoUpdateSelect {
+    _timer: number;
+    _handler: AutoUpdateEventHandler;
+    _select: JQuery<HTMLElement>;
 
-  const autoUpdateInput = (handler: AutoUpdateEventHandler, ...options: [string, number][]) => {
-    let timer: number;
-    const onTimer = (first: boolean) => {
-      const value = $("#auto-update-interval").val();
-      clearTimeout(timer);
-      if (typeof value === "string") {
-        const interval = parseInt(value) * 1000;
-        if (interval > 0) {
-          timer = setTimeout(onTimer, interval);
-          if (!first) {
-            if (handler.onUpdate) {
-              handler.onUpdate(interval);
-            }
-            console.log("auto-update", timeFormat(new Date()));
-          }
-        }
-      } else {
-        $("#auto-update-interval").val(0);
+    constructor(handler: AutoUpdateEventHandler, ...options: [string, number][]) {
+      this._timer = 0;
+      this._handler = handler;
+      this._select = $("<select id='auto-update-interval'>").css("display", "inline-block");
+      for (const [name, value] of options) {
+        this.addOption(name, value);
       }
-    };
-    const choice = $("<select id='auto-update-interval'>");
-    for (const [name, value] of options) {
-      choice.append($("<option>").val(value).text(name));
+      this._select.on("input", () => this.onInput());
     }
-    choice.on("input", function () {
-      onTimer(true);
-      if (handler.onSelect) {
-        const value = $(this).val();
-        if (typeof value === "string") {
-          handler.onSelect([$("option:checked", this).text(), parseInt(value)]);
-        }
+
+    get(): HTMLElement {
+      return this._select.get(0);
+    }
+
+    addOption(name: string, value: number) {
+      this._select.append($("<option>").val(value).text(name));
+    }
+
+    getOption(): [string, number] {
+      const option = $("option:checked", this._select);
+      const value = option.val();
+      const text = option.text();
+      if (typeof value === "string" && value !== "") {
+        return [text, parseInt(value)];
       }
-    });
-    return $("<div>").css("display", "inline-block").append(choice);
-  };
+      return ["", 0];
+    }
+
+    onInput() {
+      clearTimeout(this._timer);
+      const [name, value] = this.getOption();
+      console.log("auto-update:", [name, value]);
+      if (value <= 0) {
+        return;
+      }
+      this._handler.onSelect([name, value]);
+      this._timer = setTimeout(() => this.onTimer(), value * 1000);
+    }
+
+    onTimer() {
+      clearTimeout(this._timer);
+      const [name, value] = this.getOption();
+      console.log("auto-update:", new Date().toLocaleString());
+      if (value <= 0) {
+        return;
+      }
+      this._handler.onUpdate(value);
+      this._timer = setTimeout(() => this.onTimer(), value * 1000);
+    }
+  }
 
   GM_registerMenuCommand("履歴削除", () => {
     GM_deleteValue("cat");
@@ -267,7 +277,7 @@
         this._count = 0;
       }
 
-      table(): JQuery<HTMLElement> {
+      get(): JQuery<HTMLElement> {
         return this._table;
       }
 
@@ -310,9 +320,9 @@
         });
         this._result.hide();
         this._result.clear();
-        const keyword = this._finder.val();
-        if (typeof keyword === "string" && keyword !== "") {
-          this._result.append(findItemsText(keyword));
+        const value = this._finder.val();
+        if (typeof value === "string" && value !== "") {
+          this._result.append(findItemsText(value));
         } else {
           this._result.append(findItemsHist(this._cat));
         }
@@ -342,13 +352,22 @@
       });
       const result = new FindResult();
       const table = new CatTable(finder, result);
-      const select = autoUpdateInput({ onUpdate: () => table.reload(false) }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+      const select = new AutoUpdateSelect(
+        {
+          onUpdate: () => table.reload(false),
+          onSelect: () => {},
+        },
+        ["OFF", 0],
+        ["30sec", 30],
+        ["1min", 60],
+        ["3min", 180]
+      );
 
       $("table#cattable").before(
         $("<p>"),
-        $('<div style="text-align:center">').append(finder, " ", button, " ", select),
+        $('<div style="text-align:center">').append(finder, " ", button, " ", select.get()),
         $("<p>"),
-        result.table(),
+        result.get(),
         $("<p>")
       );
 
@@ -370,7 +389,7 @@
       });
 
       setInterval(() => {
-        if (readUpdate() === "1") {
+        if (readClearUpdateFlag() === "1") {
           table.update();
         }
       }, 2000);
@@ -592,11 +611,10 @@
               }
             }),
           " ",
-          autoUpdateInput(
+          new AutoUpdateSelect(
             {
               onUpdate: () => $("#contres > a").trigger("click"),
               onSelect: (option) => {
-                console.log("auto-update:", option);
                 if (option[0] === "OFF") {
                   autoScr.stop();
                   autoScr.status();
@@ -611,7 +629,7 @@
             ["15sec", 15],
             ["30sec", 30],
             ["1min", 60]
-          )
+          ).get()
         )
       );
     };
