@@ -50,8 +50,8 @@
         }
         getOption() {
             const option = $("option:checked", this._select);
-            const value = option.val();
             const text = option.text();
+            const value = option.val();
             if (typeof value === "string" && value !== "") {
                 return [text, parseInt(value)];
             }
@@ -59,22 +59,22 @@
         }
         onInput() {
             clearTimeout(this._timer);
-            const [name, value] = this.getOption();
-            console.log("auto-update:", [name, value]);
+            const [text, value] = this.getOption();
+            console.log("auto-update:", [text, value]);
             if (value <= 0) {
                 return;
             }
-            this._handler.onSelect([name, value]);
+            this._handler.onSelect(text, value);
             this._timer = setTimeout(() => this.onTimer(), value * 1000);
         }
         onTimer() {
             clearTimeout(this._timer);
-            const [name, value] = this.getOption();
+            const [text, value] = this.getOption();
             console.log("auto-update:", new Date().toLocaleString());
             if (value <= 0) {
                 return;
             }
-            this._handler.onUpdate(value);
+            this._handler.onUpdate();
             this._timer = setTimeout(() => this.onTimer(), value * 1000);
         }
     }
@@ -612,8 +612,8 @@ td.catup .resnum {
                 }
             }), " ", new AutoUpdateSelect({
                 onUpdate: () => $("#contres > a").trigger("click"),
-                onSelect: (option) => {
-                    if (option[0] === "OFF") {
+                onSelect: (text, value) => {
+                    if (text === "OFF") {
                         autoScr.stop();
                         autoScr.status();
                     }
