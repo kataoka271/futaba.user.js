@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Futaba
 // @namespace    https://github.com/kataoka271
-// @version      0.0.16
+// @version      0.0.17
 // @description  Futaba
 // @author       k_hir@hotmail.com
 // @match        https://may.2chan.net/b/*
@@ -680,7 +680,7 @@
         } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
           autoScr.dy /= 2;
           autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "s" && autoScr.running) {
+        } else if (e.key === "S" && autoScr.running) {
           if (!autoScr.paused) {
             autoScr.pause();
             autoScr.status("auto-scroll paused", true);
@@ -688,6 +688,8 @@
             autoScr.resume();
             autoScr.status("auto-scroll started");
           }
+        } else if (e.key == "s") {
+          $("#contres > a").trigger("click");
         }
       });
     };
