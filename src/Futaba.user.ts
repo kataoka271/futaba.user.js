@@ -60,7 +60,7 @@
     constructor(handler: AutoUpdateEventHandler, ...options: [string, number][]) {
       this._timer = 0;
       this._handler = handler;
-      this._select = $("<select id='auto-update-interval'>").css("display", "inline-block");
+      this._select = $("<select id='auto-update-interval'>");
       for (const [name, value] of options) {
         this.addOption(name, value);
       }
@@ -365,7 +365,7 @@
 
       $("table#cattable").before(
         $("<p>"),
-        $('<div style="text-align:center">').append(finder, " ", button, " ", select.get()),
+        $('<div id="controller">').append(finder, " ", button, " ", select.get()),
         $("<p>"),
         result.get(),
         $("<p>")
@@ -418,7 +418,6 @@
         return;
       }
       $("body")
-        .css("overflow-y", "hidden")
         .append(
           $("<div id='gallery'>")
             .append(img.parent().clone())
@@ -438,7 +437,6 @@
     const galleryDestroy = () => {
       $("#gallery-button").removeClass("enable");
       $("#gallery").remove();
-      $("body").css("overflow-y", "auto");
     };
 
     const makeTreeView = () => {

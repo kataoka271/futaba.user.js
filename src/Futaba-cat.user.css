@@ -23,3 +23,12 @@ td.thrnew {
 td.catup .resnum {
   color: #f02020;
 }
+#controller {
+  text-align: center;
+}
+#controller > * {
+  vertical-align: middle;
+}
+#controller > input[type="search"] {
+  font-size: small;
+}

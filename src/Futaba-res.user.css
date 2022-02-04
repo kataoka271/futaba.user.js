@@ -38,21 +38,26 @@
 }
 #gallery {
   position: fixed;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.9);
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-  overflow-y: auto;
   text-align: center;
+  overflow-y: scroll;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 #gallery > a {
   display: inline-block;
+  margin-top: 0.5em;
 }
 #gallery > a > img {
   margin: 0;
-  width: auto;
-  height: 300px;
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  object-position: 50% 100%;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);
@@ -65,4 +70,7 @@
   display: inline-block;
   padding: 5px 10px;
   border-radius: 2px;
+}
+#auto-update-interval {
+  display: inline-block;
 }

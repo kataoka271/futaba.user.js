@@ -36,7 +36,7 @@
         constructor(handler, ...options) {
             this._timer = 0;
             this._handler = handler;
-            this._select = $("<select id='auto-update-interval'>").css("display", "inline-block");
+            this._select = $("<select id='auto-update-interval'>");
             for (const [name, value] of options) {
                 this.addOption(name, value);
             }
@@ -108,6 +108,15 @@ td.thrnew {
 }
 td.catup .resnum {
   color: #f02020;
+}
+#controller {
+  text-align: center;
+}
+#controller > * {
+  vertical-align: middle;
+}
+#controller > input[type="search"] {
+  font-size: small;
 }
 `);
         function normalizeText(text) {
@@ -329,7 +338,7 @@ td.catup .resnum {
                 onUpdate: () => table.reload(false),
                 onSelect: () => { },
             }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-            $("table#cattable").before($("<p>"), $('<div style="text-align:center">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
+            $("table#cattable").before($("<p>"), $('<div id="controller">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
             table.update();
             $(window).on("unload", () => {
                 table.save();
@@ -396,21 +405,26 @@ td.catup .resnum {
 }
 #gallery {
   position: fixed;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.9);
   top: 0;
   left: 0;
   bottom: 0;
   right: 0;
-  overflow-y: auto;
   text-align: center;
+  overflow-y: scroll;
+  padding-left: 20px;
+  padding-right: 20px;
 }
 #gallery > a {
   display: inline-block;
+  margin-top: 0.5em;
 }
 #gallery > a > img {
   margin: 0;
-  width: auto;
-  height: 300px;
+  width: 250px;
+  height: 250px;
+  object-fit: contain;
+  object-position: 50% 100%;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);
@@ -423,6 +437,9 @@ td.catup .resnum {
   display: inline-block;
   padding: 5px 10px;
   border-radius: 2px;
+}
+#auto-update-interval {
+  display: inline-block;
 }
 `);
         const toggleButton = (e) => {
@@ -438,7 +455,6 @@ td.catup .resnum {
                 return;
             }
             $("body")
-                .css("overflow-y", "hidden")
                 .append($("<div id='gallery'>")
                 .append(img.parent().clone())
                 .on("dblclick", (e) => {
@@ -455,7 +471,6 @@ td.catup .resnum {
         const galleryDestroy = () => {
             $("#gallery-button").removeClass("enable");
             $("#gallery").remove();
-            $("body").css("overflow-y", "auto");
         };
         const makeTreeView = () => {
             let quoteList = [];
