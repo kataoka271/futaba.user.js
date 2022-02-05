@@ -5,7 +5,8 @@
   "main": "B9DM.user.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx gulp"
+    "build": "npx gulp",
+    "watch": "npx gulp watch"
   },
   "repository": {
     "type": "git",
