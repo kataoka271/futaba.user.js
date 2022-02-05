@@ -118,6 +118,7 @@ td.catup .resnum {
 #controller > input[type="search"] {
   font-size: small;
 }
+
 `);
         function normalizeText(text) {
             // prettier-ignore
@@ -441,6 +442,7 @@ td.catup .resnum {
 #auto-update-interval {
   display: inline-block;
 }
+
 `);
         const toggleButton = (e) => {
             e.preventDefault();

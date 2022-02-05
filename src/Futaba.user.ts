@@ -363,13 +363,7 @@
         ["3min", 180]
       );
 
-      $("table#cattable").before(
-        $("<p>"),
-        $('<div id="controller">').append(finder, " ", button, " ", select.get()),
-        $("<p>"),
-        result.get(),
-        $("<p>")
-      );
+      $("table#cattable").before($("<p>"), $('<div id="controller">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
 
       table.update();
 
