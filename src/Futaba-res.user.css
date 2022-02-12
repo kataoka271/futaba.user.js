@@ -45,19 +45,28 @@
   right: 0;
   text-align: center;
   overflow-y: scroll;
-  padding-left: 20px;
-  padding-right: 20px;
 }
-#gallery > a {
+#gallery > div {
   display: inline-block;
-  margin-top: 0.5em;
+  vertical-align: top;
+  color: rgb(100, 100, 100);
+  font-size: 80%;
+  background-color: rgb(20, 20, 20);
+  width: 250px;
+  height: calc(250px + 1.5em);
+  margin: 1.0em;
 }
-#gallery > a > img {
+#gallery > div > a {
+  display: inline-block;
+  width: 250px;
+  height: 250px;
+}
+#gallery > div > a > img {
   margin: 0;
   width: 250px;
   height: 250px;
   object-fit: contain;
-  object-position: 50% 100%;
+  object-position: 50% 50%;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);

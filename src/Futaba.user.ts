@@ -411,21 +411,36 @@
       if (img.length === 0) {
         return;
       }
-      $("body")
-        .append(
-          $("<div id='gallery'>")
-            .append(img.parent().clone())
-            .on("dblclick", (e) => {
-              if (e.target.tagName === "DIV") {
-                galleryDestroy();
-              }
-            })
-        )
+      const gallery = $("<div id='gallery'>")
+        .on("dblclick", (e) => {
+          if (e.target.tagName === "DIV") {
+            galleryDestroy();
+          }
+        })
         .on("keydown", (e) => {
           if (e.key === "Escape" || e.key === "Esc") {
             galleryDestroy();
           }
         });
+      img.parent().each(function () {
+        const text = $(this)
+          .next("blockquote")
+          .text()
+          .replace(/>[^\n]+\n?/, "");
+        let quote: JQuery<HTMLElement>;
+        if (text === "ｷﾀ━━━(ﾟ∀ﾟ)━━━!!" || text.length === 0) {
+          quote = $();
+        } else if (text.length > 10) {
+          quote = $("<span>")
+            .text(text.slice(0, 7) + "...")
+            .attr("title", text)
+            .before("<br>");
+        } else {
+          quote = $("<span>").text(text).before("<br>");
+        }
+        gallery.append($("<div>").append($(this).clone(), quote));
+      });
+      $("body").append(gallery);
     };
 
     const galleryDestroy = () => {

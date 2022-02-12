@@ -413,19 +413,28 @@ td.catup .resnum {
   right: 0;
   text-align: center;
   overflow-y: scroll;
-  padding-left: 20px;
-  padding-right: 20px;
 }
-#gallery > a {
+#gallery > div {
   display: inline-block;
-  margin-top: 0.5em;
+  vertical-align: top;
+  color: rgb(100, 100, 100);
+  font-size: 80%;
+  background-color: rgb(20, 20, 20);
+  width: 250px;
+  height: calc(250px + 1.5em);
+  margin: 1.0em;
 }
-#gallery > a > img {
+#gallery > div > a {
+  display: inline-block;
+  width: 250px;
+  height: 250px;
+}
+#gallery > div > a > img {
   margin: 0;
   width: 250px;
   height: 250px;
   object-fit: contain;
-  object-position: 50% 100%;
+  object-position: 50% 50%;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);
@@ -456,19 +465,38 @@ td.catup .resnum {
             if (img.length === 0) {
                 return;
             }
-            $("body")
-                .append($("<div id='gallery'>")
-                .append(img.parent().clone())
+            const gallery = $("<div id='gallery'>")
                 .on("dblclick", (e) => {
                 if (e.target.tagName === "DIV") {
                     galleryDestroy();
                 }
-            }))
+            })
                 .on("keydown", (e) => {
                 if (e.key === "Escape" || e.key === "Esc") {
                     galleryDestroy();
                 }
             });
+            img.parent().each(function () {
+                const text = $(this)
+                    .next("blockquote")
+                    .text()
+                    .replace(/>[^\n]+\n?/, "");
+                let quote;
+                if (text === "ｷﾀ━━━(ﾟ∀ﾟ)━━━!!" || text.length === 0) {
+                    quote = $();
+                }
+                else if (text.length > 10) {
+                    quote = $("<span>")
+                        .text(text.slice(0, 7) + "...")
+                        .attr("title", text)
+                        .before("<br>");
+                }
+                else {
+                    quote = $("<span>").text(text).before("<br>");
+                }
+                gallery.append($("<div>").append($(this).clone(), quote));
+            });
+            $("body").append(gallery);
         };
         const galleryDestroy = () => {
             $("#gallery-button").removeClass("enable");
