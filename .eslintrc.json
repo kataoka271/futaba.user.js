@@ -3,8 +3,7 @@
         "browser": true,
         "es2021": true,
         "greasemonkey": true,
-        "jquery": true,
-        "gulp": true
+        "jquery": true
     },
     "extends": "eslint:recommended",
     "parserOptions": {
