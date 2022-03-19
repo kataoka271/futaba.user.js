@@ -88,11 +88,11 @@
     onInput() {
       clearTimeout(this._timer);
       const [text, value] = this.getOption();
-      console.log("auto-update:", [text, value]);
+      console.log("auto-update:", text, value);
+      this._handler.onSelect(text, value);
       if (value <= 0) {
         return;
       }
-      this._handler.onSelect(text, value);
       this._timer = setTimeout(() => this.onTimer(), value * 1000);
     }
 
@@ -620,11 +620,12 @@
           " ",
           new AutoUpdateSelect(
             {
-              onUpdate: () => $("#contres > a").trigger("click"),
+              onUpdate: () => $("#contres > a").trigger("click", { ignore: true }),
               onSelect: (text, value) => {
+                console.log("auto-scroll", text, value);
                 if (text === "OFF") {
                   autoScr.stop();
-                  autoScr.status();
+                  autoScr.status("auto-scroll stopped");
                 } else {
                   autoScr.start();
                   autoScr.status("auto-scroll started");
@@ -632,22 +633,32 @@
               },
             },
             ["OFF", 0],
-            ["Auto", 0],
-            ["15sec", 15],
-            ["30sec", 30],
+            ["SCR", 0], // auto-scroll, no auto-update
+            ["15s", 15],
+            ["30s", 30],
             ["1min", 60]
           ).get()
         )
       );
     };
 
-    const watchUpdate = (cat: Catalog, key: string) => {
-      function onTimer(retry: number) {
+    type WatcherParam = { ignore: boolean };
+
+    class Watcher {
+      _cat: Catalog;
+      _key: string;
+
+      constructor(cat: Catalog, key: string) {
+        this._cat = cat;
+        this._key = key;
+      }
+
+      onTimer(retry: number, param?: WatcherParam) {
         const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
         const resnew = res.filter((i, e) => {
           const resnum = parseInt(e.textContent ?? "0");
           const res = $(e).parent();
-          if (resnum > cat[key].readres) {
+          if (resnum > this._cat[this._key].readres) {
             res.addClass("resnew");
             return true;
           } else {
@@ -655,20 +666,23 @@
             return false;
           }
         });
-        if (resnew.length > 0) {
-          cat[key].res = res.length;
-          cat[key].readres = res.length;
+        if (resnew.length > 0 && !param?.ignore) {
+          this._cat[this._key].res = res.length;
+          this._cat[this._key].readres = res.length;
           const newcat: Catalog = loadCatalog();
-          newcat[key] = cat[key];
+          newcat[this._key] = this._cat[this._key];
           saveCatalog(newcat, "1");
         } else if (retry > 0) {
-          setTimeout(onTimer, 100, retry - 1);
+          setTimeout((retry: number, param?: WatcherParam) => this.onTimer(retry, param), 100, retry - 1, param);
         }
       }
-      $("#contres > a").on("click", (e) => {
-        setTimeout(onTimer, 100, 10);
-      });
-    };
+
+      start() {
+        $("#contres > a").on("click", (e, param) => {
+          setTimeout((retry: number, param?: WatcherParam) => this.onTimer(retry, param), 100, 10, param);
+        });
+      }
+    }
 
     const addHotkeys = (autoScr: AutoScroller) => {
       $(window).on("keydown", (e) => {
@@ -756,7 +770,7 @@
       $("body").append(autoScr.status());
       addCommands(autoScr);
       addHotkeys(autoScr);
-      watchUpdate(cat, key);
+      new Watcher(cat, key).start();
     };
 
     initialize();

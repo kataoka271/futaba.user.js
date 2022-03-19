@@ -60,11 +60,11 @@
         onInput() {
             clearTimeout(this._timer);
             const [text, value] = this.getOption();
-            console.log("auto-update:", [text, value]);
+            console.log("auto-update:", text, value);
+            this._handler.onSelect(text, value);
             if (value <= 0) {
                 return;
             }
-            this._handler.onSelect(text, value);
             this._timer = setTimeout(() => this.onTimer(), value * 1000);
         }
         onTimer() {
@@ -656,27 +656,33 @@ td.catup .resnum {
                     makeFlatView();
                 }
             }), " ", new AutoUpdateSelect({
-                onUpdate: () => $("#contres > a").trigger("click"),
+                onUpdate: () => $("#contres > a").trigger("click", { ignore: true }),
                 onSelect: (text, value) => {
+                    console.log("auto-scroll", text, value);
                     if (text === "OFF") {
                         autoScr.stop();
-                        autoScr.status();
+                        autoScr.status("auto-scroll stopped");
                     }
                     else {
                         autoScr.start();
                         autoScr.status("auto-scroll started");
                     }
                 },
-            }, ["OFF", 0], ["Auto", 0], ["15sec", 15], ["30sec", 30], ["1min", 60]).get()));
+            }, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
+            ["15s", 15], ["30s", 30], ["1min", 60]).get()));
         };
-        const watchUpdate = (cat, key) => {
-            function onTimer(retry) {
+        class Watcher {
+            constructor(cat, key) {
+                this._cat = cat;
+                this._key = key;
+            }
+            onTimer(retry, param) {
                 const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
                 const resnew = res.filter((i, e) => {
                     var _a;
                     const resnum = parseInt((_a = e.textContent) !== null && _a !== void 0 ? _a : "0");
                     const res = $(e).parent();
-                    if (resnum > cat[key].readres) {
+                    if (resnum > this._cat[this._key].readres) {
                         res.addClass("resnew");
                         return true;
                     }
@@ -685,21 +691,23 @@ td.catup .resnum {
                         return false;
                     }
                 });
-                if (resnew.length > 0) {
-                    cat[key].res = res.length;
-                    cat[key].readres = res.length;
+                if (resnew.length > 0 && !(param === null || param === void 0 ? void 0 : param.ignore)) {
+                    this._cat[this._key].res = res.length;
+                    this._cat[this._key].readres = res.length;
                     const newcat = loadCatalog();
-                    newcat[key] = cat[key];
+                    newcat[this._key] = this._cat[this._key];
                     saveCatalog(newcat, "1");
                 }
                 else if (retry > 0) {
-                    setTimeout(onTimer, 100, retry - 1);
+                    setTimeout((retry, param) => this.onTimer(retry, param), 100, retry - 1, param);
                 }
             }
-            $("#contres > a").on("click", (e) => {
-                setTimeout(onTimer, 100, 10);
-            });
-        };
+            start() {
+                $("#contres > a").on("click", (e, param) => {
+                    setTimeout((retry, param) => this.onTimer(retry, param), 100, 10, param);
+                });
+            }
+        }
         const addHotkeys = (autoScr) => {
             $(window).on("keydown", (e) => {
                 var _a;
@@ -786,7 +794,7 @@ td.catup .resnum {
             $("body").append(autoScr.status());
             addCommands(autoScr);
             addHotkeys(autoScr);
-            watchUpdate(cat, key);
+            new Watcher(cat, key).start();
         };
         initialize();
     };
