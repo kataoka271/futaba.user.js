@@ -169,7 +169,8 @@ td.catup .resnum {
             });
         };
         const updateCat = (cat, td, oldcat) => {
-            const href = $("a", td).attr("href");
+            const a = $("a", td);
+            const href = a.attr("href");
             if (href == null) {
                 return;
             }
@@ -177,6 +178,7 @@ td.catup .resnum {
             if (key == null) {
                 return;
             }
+            a.attr("target", key);
             const res = parseInt($("font", td).text());
             const title = $("small", td).text();
             if (cat[key] != null) {
