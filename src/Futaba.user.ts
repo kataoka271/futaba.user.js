@@ -348,7 +348,13 @@
     }
 
     const initialize = () => {
-      const finder = $('<input type="search" placeholder="Search...">').css("vertical-align", "middle");
+      const finder = $('<input type="search" placeholder="Search...">')
+        .css("vertical-align", "middle")
+        .on("focus", (e) => {
+          if (e.target instanceof HTMLInputElement) {
+            e.target.select();
+          }
+        });
       const button = $("<input type='button' value='更新'>").on("click", () => {
         table.reload();
       });
