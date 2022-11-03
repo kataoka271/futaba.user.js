@@ -462,44 +462,37 @@ td.catup .resnum {
 #auto-update-interval {
   display: inline-block;
 }
-#gallery > div > a[href$=".webm" i] {
-  border: 2px solid rgb(150, 0, 0);
+#gallery > div.movie > div {
+  z-index: 1000;
+  position: absolute;
 }
-#gallery > div > a[href$=".webm" i]::before {
-  background-color: rgb(150, 0, 0);
+#gallery > div.movie > div > video {
+  max-width: 250px !important;
+  max-height: 250px !important;
+  width: 250px;
+  height: 250px;
+}
+#gallery > div.movie > a::before,
+#gallery > div.anime > a::before {
   color: rgb(200, 200, 200);
   font-weight: bold;
   font-size: 9pt;
-  content: "WEBM";
+  content: attr(data-ext);
   position: absolute;
   right: 0;
   top: 0;
 }
-#gallery > div > a[href$=".mp4" i] {
+#gallery > div.movie > a {
   border: 2px solid rgb(150, 0, 0);
 }
-#gallery > div > a[href$=".mp4" i]::before {
+#gallery > div.movie > a::before {
   background-color: rgb(150, 0, 0);
-  color: rgb(200, 200, 200);
-  font-weight: bold;
-  font-size: 9pt;
-  content: "MP4";
-  position: absolute;
-  right: 0;
-  top: 0;
 }
-#gallery > div > a[href$=".gif" i] {
+#gallery > div.anime > a {
   border: 2px solid rgb(0, 80, 0);
 }
-#gallery > div > a[href$=".gif" i]::before {
+#gallery > div.anime > a::before {
   background-color: rgb(0, 80, 0);
-  color: rgb(200, 200, 200);
-  font-weight: bold;
-  font-size: 9pt;
-  content: "GIF";
-  position: absolute;
-  right: 0;
-  top: 0;
 }
 
 `);
@@ -545,7 +538,17 @@ td.catup .resnum {
                 }
             };
             const make = (index, anchor) => {
-                return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+                var _a;
+                const ext = (_a = anchor.getAttribute("href")) === null || _a === void 0 ? void 0 : _a.split(".").slice(-1)[0].toLowerCase();
+                if (ext === "mp4" || ext === "webm") {
+                    return $("<div>").addClass("movie").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+                }
+                else if (ext == "gif") {
+                    return $("<div>").addClass("anime").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+                }
+                else {
+                    return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+                }
             };
             $("body").append(gallery.append(images.parent().map(make)));
             $("#gallery").trigger("focus");

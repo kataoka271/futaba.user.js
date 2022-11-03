@@ -450,7 +450,14 @@
         }
       };
       const make = (index: number, anchor: HTMLElement): HTMLElement => {
-        return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+        const ext = anchor.getAttribute("href")?.split(".").slice(-1)[0].toLowerCase();
+        if (ext === "mp4" || ext === "webm") {
+          return $("<div>").addClass("movie").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+        } else if (ext == "gif") {
+          return $("<div>").addClass("anime").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+        } else {
+          return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+        }
       };
       $("body").append(gallery.append(images.parent().map(make)));
       $("#gallery").trigger("focus");
