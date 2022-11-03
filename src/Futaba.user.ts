@@ -418,11 +418,11 @@
     };
 
     const galleryCreate = () => {
-      const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-      if (img.length === 0) {
+      const images = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
+      if (images.length === 0) {
         return;
       }
-      const gallery = $("<div id='gallery'>")
+      const gallery = $("<div id='gallery' tabindex='0'>")
         .on("dblclick", (e) => {
           if (e.target.tagName === "DIV") {
             galleryDestroy();
@@ -433,25 +433,27 @@
             galleryDestroy();
           }
         });
-      img.parent().each(function () {
-        const text = $(this)
+      const quote = (anchor: HTMLElement): JQuery<HTMLElement> => {
+        const text = $(anchor)
           .next("blockquote")
           .text()
           .replace(/>[^\n]+\n?/, "");
-        let quote: JQuery<HTMLElement>;
         if (text === "ｷﾀ━━━(ﾟ∀ﾟ)━━━!!" || text.length === 0) {
-          quote = $();
+          return $();
         } else if (text.length > 10) {
-          quote = $("<span>")
+          return $("<span>")
             .text(text.slice(0, 7) + "...")
             .attr("title", text)
             .before("<br>");
         } else {
-          quote = $("<span>").text(text).before("<br>");
+          return $("<span>").text(text).before("<br>");
         }
-        gallery.append($("<div>").append($(this).clone(), quote));
-      });
-      $("body").append(gallery);
+      };
+      const make = (index: number, anchor: HTMLElement): HTMLElement => {
+        return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+      };
+      $("body").append(gallery.append(images.parent().map(make)));
+      $("#gallery").trigger("focus");
     };
 
     const galleryDestroy = () => {
