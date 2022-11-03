@@ -432,12 +432,13 @@ td.catup .resnum {
   background-color: rgb(20, 20, 20);
   width: 250px;
   height: calc(250px + 1.5em);
-  margin: 1.0em;
+  margin: 1em;
 }
 #gallery > div > a {
   display: inline-block;
   width: 250px;
   height: 250px;
+  position: relative;
 }
 #gallery > div > a > img {
   margin: 0;
@@ -461,6 +462,32 @@ td.catup .resnum {
 #auto-update-interval {
   display: inline-block;
 }
+#gallery > div > a[href$=".webm" i] {
+  border: 2px solid rgb(150, 0, 0);
+}
+#gallery > div > a[href$=".webm" i]::before {
+  background-color: rgb(150, 0, 0);
+  color: rgb(200, 200, 200);
+  font-weight: bold;
+  font-size: 9pt;
+  content: "WEBM";
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+#gallery > div > a[href$=".gif" i] {
+  border: 2px solid rgb(0, 80, 0);
+}
+#gallery > div > a[href$=".gif" i]::before {
+  background-color: rgb(0, 80, 0);
+  color: rgb(200, 200, 200);
+  font-weight: bold;
+  font-size: 9pt;
+  content: "GIF";
+  position: absolute;
+  right: 0;
+  top: 0;
+}
 
 `);
         const toggleButton = (e) => {
@@ -471,11 +498,11 @@ td.catup .resnum {
             return td.parent().parent().parent();
         };
         const galleryCreate = () => {
-            const img = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-            if (img.length === 0) {
+            const images = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
+            if (images.length === 0) {
                 return;
             }
-            const gallery = $("<div id='gallery'>")
+            const gallery = $("<div id='gallery' tabindex='0'>")
                 .on("dblclick", (e) => {
                 if (e.target.tagName === "DIV") {
                     galleryDestroy();
@@ -486,27 +513,29 @@ td.catup .resnum {
                     galleryDestroy();
                 }
             });
-            img.parent().each(function () {
-                const text = $(this)
+            const quote = (anchor) => {
+                const text = $(anchor)
                     .next("blockquote")
                     .text()
                     .replace(/>[^\n]+\n?/, "");
-                let quote;
                 if (text === "ｷﾀ━━━(ﾟ∀ﾟ)━━━!!" || text.length === 0) {
-                    quote = $();
+                    return $();
                 }
                 else if (text.length > 10) {
-                    quote = $("<span>")
+                    return $("<span>")
                         .text(text.slice(0, 7) + "...")
                         .attr("title", text)
                         .before("<br>");
                 }
                 else {
-                    quote = $("<span>").text(text).before("<br>");
+                    return $("<span>").text(text).before("<br>");
                 }
-                gallery.append($("<div>").append($(this).clone(), quote));
-            });
-            $("body").append(gallery);
+            };
+            const make = (index, anchor) => {
+                return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+            };
+            $("body").append(gallery.append(images.parent().map(make)));
+            $("#gallery").trigger("focus");
         };
         const galleryDestroy = () => {
             $("#gallery-button").removeClass("enable");
