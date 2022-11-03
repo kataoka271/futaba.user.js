@@ -250,22 +250,24 @@
       _table: JQuery<HTMLElement>;
       _tbody: JQuery<HTMLElement>;
       _tr: JQuery<HTMLElement>;
-      _count: number;
+      _item_count: number;
+      _column_count: number;
 
-      constructor() {
+      constructor(column_count: number = 8) {
         this._table = $('<table border="1" align="center">').css("display", "none");
         this._tbody = $("<tbody>").appendTo(this._table);
         this._tr = $("<tr>").appendTo(this._tbody);
-        this._count = 0;
+        this._item_count = 0;
+        this._column_count = column_count;
       }
 
       append(elems: JQuery<HTMLElement>) {
         elems.each((i, e) => {
-          if (this._count === 0) {
+          if (this._item_count === 0) {
             this._table.css("display", "");
           }
-          this._count += 1;
-          if (this._count % 8 === 0) {
+          this._item_count += 1;
+          if (this._item_count % this._column_count === 0) {
             this._tr = $("<tr>").appendTo(this._tbody);
           }
           this._tr.append($(e).clone(true));
@@ -276,7 +278,7 @@
         this._table.css("display", "none");
         this._tbody.empty();
         this._tr = $("<tr>").appendTo(this._tbody);
-        this._count = 0;
+        this._item_count = 0;
       }
 
       get(): JQuery<HTMLElement> {
@@ -284,7 +286,7 @@
       }
 
       count(): number {
-        return this._count;
+        return this._item_count;
       }
 
       show() {
@@ -358,7 +360,8 @@
       const button = $("<input type='button' value='更新'>").on("click", () => {
         table.reload();
       });
-      const result = new FindResult();
+      const column_count = $("table#cattable tr:first-child td").length;
+      const result = new FindResult(column_count);
       const table = new CatTable(finder, result);
       const select = new AutoUpdateSelect(
         {

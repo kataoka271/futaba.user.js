@@ -250,19 +250,20 @@ td.catup .resnum {
             return cat;
         };
         class FindResult {
-            constructor() {
+            constructor(column_count = 8) {
                 this._table = $('<table border="1" align="center">').css("display", "none");
                 this._tbody = $("<tbody>").appendTo(this._table);
                 this._tr = $("<tr>").appendTo(this._tbody);
-                this._count = 0;
+                this._item_count = 0;
+                this._column_count = column_count;
             }
             append(elems) {
                 elems.each((i, e) => {
-                    if (this._count === 0) {
+                    if (this._item_count === 0) {
                         this._table.css("display", "");
                     }
-                    this._count += 1;
-                    if (this._count % 8 === 0) {
+                    this._item_count += 1;
+                    if (this._item_count % this._column_count === 0) {
                         this._tr = $("<tr>").appendTo(this._tbody);
                     }
                     this._tr.append($(e).clone(true));
@@ -272,13 +273,13 @@ td.catup .resnum {
                 this._table.css("display", "none");
                 this._tbody.empty();
                 this._tr = $("<tr>").appendTo(this._tbody);
-                this._count = 0;
+                this._item_count = 0;
             }
             get() {
                 return this._table;
             }
             count() {
-                return this._count;
+                return this._item_count;
             }
             show() {
                 this._table.show();
@@ -341,7 +342,8 @@ td.catup .resnum {
             const button = $("<input type='button' value='更新'>").on("click", () => {
                 table.reload();
             });
-            const result = new FindResult();
+            const column_count = $("table#cattable tr:first-child td").length;
+            const result = new FindResult(column_count);
             const table = new CatTable(finder, result);
             const select = new AutoUpdateSelect({
                 onUpdate: () => table.reload(false),
