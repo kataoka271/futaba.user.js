@@ -426,11 +426,15 @@
         .on("dblclick", (e) => {
           if (e.target.tagName === "DIV") {
             galleryDestroy();
+            e.stopPropagation();
+            e.preventDefault();
           }
         })
         .on("keydown", (e) => {
           if (e.key === "Escape" || e.key === "Esc") {
             galleryDestroy();
+            e.stopPropagation();
+            e.preventDefault();
           }
         });
       const quote = (anchor: HTMLElement): JQuery<HTMLElement> => {
