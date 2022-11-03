@@ -475,6 +475,19 @@ td.catup .resnum {
   right: 0;
   top: 0;
 }
+#gallery > div > a[href$=".mp4" i] {
+  border: 2px solid rgb(150, 0, 0);
+}
+#gallery > div > a[href$=".mp4" i]::before {
+  background-color: rgb(150, 0, 0);
+  color: rgb(200, 200, 200);
+  font-weight: bold;
+  font-size: 9pt;
+  content: "MP4";
+  position: absolute;
+  right: 0;
+  top: 0;
+}
 #gallery > div > a[href$=".gif" i] {
   border: 2px solid rgb(0, 80, 0);
 }
