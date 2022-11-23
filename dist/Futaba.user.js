@@ -845,6 +845,20 @@ td.catup .resnum {
                 newcat[key] = cat[key];
                 saveCatalog(newcat, "1");
             });
+            $("div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
+                var _a;
+                const img = $(e.target);
+                const ext = (_a = img.parent().attr("href")) === null || _a === void 0 ? void 0 : _a.split(".").slice(-1)[0].toLowerCase();
+                if (ext === "mp4" || ext === "webm") {
+                    $(e.target).trigger("click");
+                }
+            });
+            $("div.thre > table > tbody > tr > td.rtd").on("mouseleave", (e) => {
+                const video = $("video", e.target);
+                if (video.length > 0) {
+                    video.next().trigger("click");
+                }
+            });
             const autoScr = new AutoScroller();
             $("body").append(autoScr.status());
             addCommands(autoScr);

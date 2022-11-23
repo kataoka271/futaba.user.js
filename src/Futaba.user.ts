@@ -785,6 +785,20 @@
         saveCatalog(newcat, "1");
       });
 
+      $("div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
+        const img = $(e.target);
+        const ext = img.parent().attr("href")?.split(".").slice(-1)[0].toLowerCase();
+        if (ext === "mp4" || ext === "webm") {
+          $(e.target).trigger("click");
+        }
+      });
+      $("div.thre > table > tbody > tr > td.rtd").on("mouseleave", (e) => {
+        const video = $("video", e.target);
+        if (video.length > 0) {
+          video.next().trigger("click");
+        }
+      });
+
       const autoScr = new AutoScroller();
 
       $("body").append(autoScr.status());
