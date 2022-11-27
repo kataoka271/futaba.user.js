@@ -98,7 +98,7 @@
 
     onTimer() {
       clearTimeout(this._timer);
-      const [text, value] = this.getOption();
+      const [, value] = this.getOption();
       console.log("auto-update:", new Date().toLocaleString());
       if (value <= 0) {
         return;
@@ -253,7 +253,7 @@
       _item_count: number;
       _column_count: number;
 
-      constructor(column_count: number = 8) {
+      constructor(column_count = 8) {
         this._table = $('<table border="1" align="center">').css("display", "none");
         this._tbody = $("<tbody>").appendTo(this._table);
         this._tr = $("<tr>").appendTo(this._tbody);
@@ -366,7 +366,7 @@
       const select = new AutoUpdateSelect(
         {
           onUpdate: () => table.reload(false),
-          onSelect: () => {},
+          onSelect: () => ({}),
         },
         ["OFF", 0],
         ["30sec", 30],
@@ -733,7 +733,7 @@
             autoScr.resume();
             autoScr.status("auto-scroll started");
           }
-        } else if (e.key == "s") {
+        } else if (e.key === "s") {
           $("#contres > a").trigger("click");
         }
       });
