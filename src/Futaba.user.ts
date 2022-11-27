@@ -418,8 +418,8 @@
     };
 
     const galleryCreate = () => {
-      const images = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-      if (images.length === 0) {
+      const anchors = $<HTMLAnchorElement>("div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+      if (anchors.length === 0) {
         return;
       }
       const gallery = $("<div id='gallery' tabindex='0'>")
@@ -437,8 +437,8 @@
             e.preventDefault();
           }
         });
-      const quote = (anchor: HTMLElement): JQuery<HTMLElement> => {
-        const text = $(anchor)
+      const quote = (anchor: JQuery<HTMLElement>): JQuery<HTMLElement> => {
+        const text = anchor
           .next("blockquote")
           .text()
           .replace(/>[^\n]+\n?/, "");
@@ -453,17 +453,18 @@
           return $("<span>").text(text).before("<br>");
         }
       };
-      const make = (index: number, anchor: HTMLElement): HTMLElement => {
-        const ext = anchor.getAttribute("href")?.split(".").slice(-1)[0].toLowerCase();
+      const make = (index: number, anchor: HTMLAnchorElement): HTMLElement => {
+        const a = $(anchor);
+        const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
         if (ext === "mp4" || ext === "webm") {
-          return $("<div>").addClass("movie").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
-        } else if (ext == "gif") {
-          return $("<div>").addClass("anime").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+          return $("<div>").addClass("movie").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
+        } else if (ext === "gif") {
+          return $("<div>").addClass("anime").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
         } else {
-          return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+          return $("<div>").append(a.clone(), quote(a)).get(0);
         }
       };
-      $("body").append(gallery.append(images.parent().map(make)));
+      $("body").append(gallery.append(anchors.map(make)));
       $("#gallery").trigger("focus");
     };
 
