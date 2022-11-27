@@ -789,17 +789,33 @@
         saveCatalog(newcat, "1");
       });
 
-      $("div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
+      $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
         const img = $(e.target);
-        const ext = img.parent().attr("href")?.split(".").slice(-1)[0].toLowerCase();
+        const src = img.attr("src");
+        const href = img.parent().attr("href");
+        if (src == null || href == null) {
+          return;
+        }
+        const ext = href.split(".").slice(-1)[0].toLowerCase();
         if (ext === "mp4" || ext === "webm") {
-          $(e.target).trigger("click");
+          img.trigger("click");
+        } else if (ext === "gif") {
+          img.data("thumb", src).attr("src", href);
         }
       });
-      $("div.thre > table > tbody > tr > td.rtd").on("mouseleave", (e) => {
-        const video = $("video", e.target);
+      $("div.thre").on("mouseout", (e) => {
+        if (e.target.tagName === "DIV" || e.target.tagName === "TD") {
+          const video = $("video.extendWebm", e.target);
         if (video.length > 0) {
           video.next().trigger("click");
+            e.stopPropagation();
+          }
+        } else if (e.target.tagName === "IMG") {
+          const thumb = $(e.target).data("thumb");
+          if (thumb != null) {
+            $(e.target).attr("src", thumb).removeData("thumb");
+            e.stopPropagation();
+          }
         }
       });
 
