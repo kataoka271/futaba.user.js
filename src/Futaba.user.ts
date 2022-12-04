@@ -807,8 +807,8 @@
       $("div.thre").on("mouseout", (e) => {
         if (e.target.tagName === "DIV" || e.target.tagName === "TD") {
           const video = $("video.extendWebm", e.target);
-        if (video.length > 0) {
-          video.next().trigger("click");
+          if (video.length > 0) {
+            video.next().trigger("click");
             e.stopPropagation();
           }
         } else if (e.target.tagName === "IMG") {
