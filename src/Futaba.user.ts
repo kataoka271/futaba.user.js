@@ -60,7 +60,7 @@
     constructor(handler: AutoUpdateEventHandler, ...options: [string, number][]) {
       this._timer = 0;
       this._handler = handler;
-      this._select = $("<select id='auto-update-interval'>");
+      this._select = $('<select id="auto-update-interval">');
       for (const [name, value] of options) {
         this.addOption(name, value);
       }
@@ -357,7 +357,7 @@
             e.target.select();
           }
         });
-      const button = $("<input type='button' value='更新'>").on("click", () => {
+      const button = $('<input type="button" value="更新">').on("click", () => {
         table.reload();
       });
       const column_count = $("table#cattable tr:first-child td").length;
@@ -409,31 +409,42 @@
 `);
 
     class ImageViewer {
-      images: JQuery<HTMLAnchorElement>;
+      images: JQuery<HTMLElement>;
+      thumbs: JQuery<HTMLElement>;
       index: number;
 
       constructor(anchors: JQuery<HTMLAnchorElement>) {
-        this.images = anchors.map((i, e) => {
-          const a = e.cloneNode(true) as HTMLAnchorElement;
-          const img = a.querySelector<HTMLImageElement>("img");
-          if (img == null) {
-            return;
+        this.images = anchors.map((i, anchor) => {
+          const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
+          if (ext === "mp4" || ext === "webm") {
+            const img = $("<img>").attr("src", $("img", anchor).attr("src") ?? anchor.href);
+            return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
+          } else {
+            const img = $("<img>").attr("src", anchor.href);
+            return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
           }
-          const ext = a.href.split(".").slice(-1)[0].toLowerCase();
-          if (ext !== "mp4" && ext !== "webm") {
-            img.src = a.href;
-            img.removeAttribute("width");
-            img.removeAttribute("height");
-          }
-          return a;
+        });
+        this.thumbs = anchors.map((i, anchor) => {
+          const img = $("<img>").attr("src", $("img", anchor).attr("src") ?? anchor.href);
+          return img.get(0);
         });
         this.index = 0;
       }
 
       page(i: number) {
         if (0 <= i && i < this.images.length) {
-          $("#image-view > .image-slider").css("transform", `translate(calc(-100% * ${i}))`);
+          $("#image-view > .image-slider > div > div > video").next().trigger("click");
+          $(`#image-view > .image-slider > div:nth-child(${i + 1}).movie > a > img`).trigger("click");
+          $("#image-view > .image-slider").css("transform", `translate(-${100 * i}%)`);
           $("#image-view > .image-number").text(`${i + 1}/${this.images.length}`);
+          const offset = 50 * i - (window.innerWidth - 50) / 2;
+          if (offset < 0) {
+            $("#image-view > .image-thumbs").css("transform", "translate(0)");
+          } else {
+            $("#image-view > .image-thumbs").css("transform", `translate(-${offset}px)`);
+          }
+          this.thumbs.removeClass("active");
+          this.thumbs.eq(i).addClass("active");
         } else {
           console.error("illegal page number", i);
         }
@@ -454,15 +465,7 @@
       }
 
       show(image: HTMLAnchorElement) {
-        const slider = $('<div class="image-slider">')
-          .on("dblclick", (e) => {
-            this.destroy();
-            e.stopPropagation();
-            e.preventDefault();
-          })
-          .append(this.images);
-        const number = $('<div class="image-number">');
-        const viewer = $('<div id="image-view">')
+        const viewer = $('<div id="image-view" tabindex="0">')
           .on("keydown", (e) => {
             if (e.key === "ArrowLeft") {
               this.prev();
@@ -474,17 +477,7 @@
             e.stopPropagation();
             e.preventDefault();
           })
-          .on("dblclick", (e) => {
-            this.destroy();
-            e.stopPropagation();
-            e.preventDefault();
-          })
           .on("click", (e) => {
-            if (e.offsetX < e.target.clientWidth / 4) {
-              this.prev();
-            } else if (e.offsetX > e.target.clientWidth * 3 / 4) {
-              this.next();
-            }
             e.stopPropagation();
             e.preventDefault();
           })
@@ -500,12 +493,14 @@
             e.stopPropagation();
             e.preventDefault();
           })
-          .append(slider)
-          .append(number);
+          .append($('<div class="image-slider">').append(this.images))
+          .append($('<div class="image-thumbs">').append(this.thumbs))
+          .append($('<div class="image-number">'));
         $("#gallery").css("display", "none");
         $("body").append(viewer);
-        this.images.each((i, e) => {
-          if (e.href === image.href) {
+        $("#image-view").trigger("focus");
+        this.images.children("a").each((i, e) => {
+          if (e instanceof HTMLAnchorElement && e.href === image.href) {
             this.index = i;
             this.page(this.index);
           }
@@ -528,12 +523,12 @@
     };
 
     const galleryCreate = () => {
-      const anchors = $<HTMLAnchorElement>("div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+      const anchors = $<HTMLAnchorElement>("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
       if (anchors.length === 0) {
         return;
       }
       const imageViewer = new ImageViewer(anchors);
-      const gallery = $("<div id='gallery' tabindex='0'>")
+      const gallery = $('<div id="gallery" tabindex="0">')
         .on("dblclick", (e) => {
           if (e.target.tagName === "DIV") {
             galleryDestroy();
@@ -598,7 +593,7 @@
 
     const makeTreeView = () => {
       let quoteList: { quot: string; elem: HTMLElement; resnew: boolean }[] = [];
-      $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($("<span id='resnew'>"));
+      $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($('<span id="resnew">'));
       $($("div.thre > table").get().reverse()).each((i, table) => {
         const td = $("td.rtd", table).first();
         const text = $("blockquote, a, span", td)
@@ -697,7 +692,7 @@
 
       status(text?: string, sticky?: boolean): JQuery<HTMLElement> {
         if (!this._status) {
-          this._status = $("<div id='auto-scroll-status'>");
+          this._status = $('<div id="auto-scroll-status">');
         }
         clearTimeout(this._toast);
         if (text != null) {
@@ -724,8 +719,8 @@
 
     const addCommands = (autoScr: AutoScroller) => {
       $("body").append(
-        $("<div id='commands'>").append(
-          $("<a class='cornar-first' id='gallery-button'>")
+        $('<div id="commands">').append(
+          $('<a class="cornar-first" id="gallery-button">')
             .text("画像一覧")
             .on("click", (e) => {
               if (toggleButton(e)) {
@@ -756,7 +751,7 @@
                 ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
               }
             }),
-          $("<a class='cornar-last'>")
+          $('<a class="cornar-last">')
             .text("ツリー表示")
             .on("click", (e) => {
               if (toggleButton(e)) {

@@ -36,7 +36,7 @@
         constructor(handler, ...options) {
             this._timer = 0;
             this._handler = handler;
-            this._select = $("<select id='auto-update-interval'>");
+            this._select = $('<select id="auto-update-interval">');
             for (const [name, value] of options) {
                 this.addOption(name, value);
             }
@@ -339,7 +339,7 @@ td.catup .resnum {
                     e.target.select();
                 }
             });
-            const button = $("<input type='button' value='更新'>").on("click", () => {
+            const button = $('<input type="button" value="更新">').on("click", () => {
                 table.reload();
             });
             const column_count = $("table#cattable tr:first-child td").length;
@@ -381,6 +381,21 @@ td.catup .resnum {
 }
 .rtd.resnew > .rsc {
   font-weight: bold;
+}
+#auto-scroll-status {
+  background-color: rgba(200, 200, 200, 0.8);
+  color: rgb(100, 100, 100);
+  font-size: 80%;
+  position: fixed;
+  bottom: 50px;
+  right: 10px;
+  z-index: 1000;
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 2px;
+}
+#auto-update-interval {
+  display: inline-block;
 }
 #commands {
   position: fixed;
@@ -447,28 +462,13 @@ td.catup .resnum {
   object-fit: contain;
   object-position: 50% 50%;
 }
-#auto-scroll-status {
-  background-color: rgba(200, 200, 200, 0.8);
-  color: rgb(100, 100, 100);
-  font-size: 80%;
-  position: fixed;
-  bottom: 50px;
-  right: 10px;
-  z-index: 1000;
-  display: inline-block;
-  padding: 5px 10px;
-  border-radius: 2px;
-}
-#auto-update-interval {
-  display: inline-block;
-}
 #gallery > div.movie > div {
   z-index: 1000;
   position: absolute;
 }
 #gallery > div.movie > div > video {
-  max-width: 250px !important;
-  max-height: 250px !important;
+  max-width: none !important;
+  max-height: none !important;
   width: 250px;
   height: 250px;
 }
@@ -507,25 +507,64 @@ td.catup .resnum {
 }
 #image-view > .image-slider {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-direction: row;
   transition: all 300ms 0s ease;
   width: 100%;
-  height: 100%;
+  height: calc(100% - 50px);
 }
-#image-view > .image-slider > a {
-  display: block;
+#image-view > .image-slider > div {
+  flex-basis: 100%;
   flex-shrink: 0;
+  text-align: center;
   width: 100%;
   height: 100%;
 }
-#image-view > .image-slider > a > img {
-  display: block;
-  object-fit: contain;
-  object-position: top;
-  width: 100%;
+#image-view > .image-slider > div > div {
+  display: inline-block;
+  width: auto;
   height: 100%;
-  margin: 0;
+}
+#image-view > .image-slider > div > div > video {
+  object-fit: contain;
+  object-position: center;
+  max-width: calc(100% - 30px) !important;
+  max-height: 100% !important;
+}
+#image-view > .image-slider > div > a {
+  display: inline-block;
+  width: auto;
+  height: 100%;
+}
+#image-view > .image-slider > div > a > img {
+  object-fit: contain;
+  object-position: center;
+  max-width: 100%;
+  max-height: 100%;
+}
+#image-view > .image-thumbs {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  width: 100%;
+  height: 50px;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+}
+#image-view > .image-thumbs > img {
+  background-color: black;
+  flex-basis: 50px;
+  flex-shrink: 0;
+  object-fit: scale-down;
+  object-position: center;
+  width: 50px;
+  height: 50px;
+  border: 2px solid rgba(0, 0, 0, 0.9);
+  box-sizing: border-box;
+}
+#image-view > .image-thumbs > img.active {
+  border: 2px solid rgb(200, 0, 0);
 }
 #image-view > .image-number {
   background-color: rgba(200, 200, 200, 0.8);
@@ -533,34 +572,48 @@ td.catup .resnum {
   font-weight: bold;
   font-size: small;
   position: fixed;
+  left: 0;
   top: 0;
-  right: 0;
   padding: 0.5em;
 }
 
 `);
         class ImageViewer {
             constructor(anchors) {
-                this.images = anchors.map((i, e) => {
-                    const a = e.cloneNode(true);
-                    const img = a.querySelector("img");
-                    if (img == null) {
-                        return;
+                this.images = anchors.map((i, anchor) => {
+                    var _a;
+                    const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
+                    if (ext === "mp4" || ext === "webm") {
+                        const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                        return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
                     }
-                    const ext = a.href.split(".").slice(-1)[0].toLowerCase();
-                    if (ext !== "mp4" && ext !== "webm") {
-                        img.src = a.href;
-                        img.removeAttribute("width");
-                        img.removeAttribute("height");
+                    else {
+                        const img = $("<img>").attr("src", anchor.href);
+                        return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
                     }
-                    return a;
+                });
+                this.thumbs = anchors.map((i, anchor) => {
+                    var _a;
+                    const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                    return img.get(0);
                 });
                 this.index = 0;
             }
             page(i) {
                 if (0 <= i && i < this.images.length) {
-                    $("#image-view > .image-slider").css("transform", `translate(calc(-100% * ${i}))`);
+                    $("#image-view > .image-slider > div > div > video").next().trigger("click");
+                    $(`#image-view > .image-slider > div:nth-child(${i + 1}).movie > a > img`).trigger("click");
+                    $("#image-view > .image-slider").css("transform", `translate(-${100 * i}%)`);
                     $("#image-view > .image-number").text(`${i + 1}/${this.images.length}`);
+                    const offset = 50 * i - (window.innerWidth - 50) / 2;
+                    if (offset < 0) {
+                        $("#image-view > .image-thumbs").css("transform", "translate(0)");
+                    }
+                    else {
+                        $("#image-view > .image-thumbs").css("transform", `translate(-${offset}px)`);
+                    }
+                    this.thumbs.removeClass("active");
+                    this.thumbs.eq(i).addClass("active");
                 }
                 else {
                     console.error("illegal page number", i);
@@ -579,15 +632,7 @@ td.catup .resnum {
                 }
             }
             show(image) {
-                const slider = $('<div class="image-slider">')
-                    .on("dblclick", (e) => {
-                    this.destroy();
-                    e.stopPropagation();
-                    e.preventDefault();
-                })
-                    .append(this.images);
-                const number = $('<div class="image-number">');
-                const viewer = $('<div id="image-view">')
+                const viewer = $('<div id="image-view" tabindex="0">')
                     .on("keydown", (e) => {
                     if (e.key === "ArrowLeft") {
                         this.prev();
@@ -601,18 +646,7 @@ td.catup .resnum {
                     e.stopPropagation();
                     e.preventDefault();
                 })
-                    .on("dblclick", (e) => {
-                    this.destroy();
-                    e.stopPropagation();
-                    e.preventDefault();
-                })
                     .on("click", (e) => {
-                    if (e.offsetX < e.target.clientWidth / 4) {
-                        this.prev();
-                    }
-                    else if (e.offsetX > e.target.clientWidth * 3 / 4) {
-                        this.next();
-                    }
                     e.stopPropagation();
                     e.preventDefault();
                 })
@@ -629,12 +663,14 @@ td.catup .resnum {
                     e.stopPropagation();
                     e.preventDefault();
                 })
-                    .append(slider)
-                    .append(number);
+                    .append($('<div class="image-slider">').append(this.images))
+                    .append($('<div class="image-thumbs">').append(this.thumbs))
+                    .append($('<div class="image-number">'));
                 $("#gallery").css("display", "none");
                 $("body").append(viewer);
-                this.images.each((i, e) => {
-                    if (e.href === image.href) {
+                $("#image-view").trigger("focus");
+                this.images.children("a").each((i, e) => {
+                    if (e instanceof HTMLAnchorElement && e.href === image.href) {
                         this.index = i;
                         this.page(this.index);
                     }
@@ -653,12 +689,12 @@ td.catup .resnum {
             return td.parent().parent().parent();
         };
         const galleryCreate = () => {
-            const anchors = $("div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+            const anchors = $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
             if (anchors.length === 0) {
                 return;
             }
             const imageViewer = new ImageViewer(anchors);
-            const gallery = $("<div id='gallery' tabindex='0'>")
+            const gallery = $('<div id="gallery" tabindex="0">')
                 .on("dblclick", (e) => {
                 if (e.target.tagName === "DIV") {
                     galleryDestroy();
@@ -725,7 +761,7 @@ td.catup .resnum {
         };
         const makeTreeView = () => {
             let quoteList = [];
-            $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($("<span id='resnew'>"));
+            $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($('<span id="resnew">'));
             $($("div.thre > table").get().reverse()).each((i, table) => {
                 const td = $("td.rtd", table).first();
                 const text = $("blockquote, a, span", td)
@@ -811,7 +847,7 @@ td.catup .resnum {
             }
             status(text, sticky) {
                 if (!this._status) {
-                    this._status = $("<div id='auto-scroll-status'>");
+                    this._status = $('<div id="auto-scroll-status">');
                 }
                 clearTimeout(this._toast);
                 if (text != null) {
@@ -836,7 +872,7 @@ td.catup .resnum {
             }
         }
         const addCommands = (autoScr) => {
-            $("body").append($("<div id='commands'>").append($("<a class='cornar-first' id='gallery-button'>")
+            $("body").append($('<div id="commands">').append($('<a class="cornar-first" id="gallery-button">')
                 .text("画像一覧")
                 .on("click", (e) => {
                 if (toggleButton(e)) {
@@ -867,7 +903,7 @@ td.catup .resnum {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
                     ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
                 }
-            }), $("<a class='cornar-last'>")
+            }), $('<a class="cornar-last">')
                 .text("ツリー表示")
                 .on("click", (e) => {
                 if (toggleButton(e)) {
