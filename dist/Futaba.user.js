@@ -69,7 +69,7 @@
         }
         onTimer() {
             clearTimeout(this._timer);
-            const [text, value] = this.getOption();
+            const [, value] = this.getOption();
             console.log("auto-update:", new Date().toLocaleString());
             if (value <= 0) {
                 return;
@@ -347,7 +347,7 @@ td.catup .resnum {
             const table = new CatTable(finder, result);
             const select = new AutoUpdateSelect({
                 onUpdate: () => table.reload(false),
-                onSelect: () => { },
+                onSelect: () => ({}),
             }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
             $("table#cattable").before($("<p>"), $('<div id="controller">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
             table.update();
@@ -494,8 +494,157 @@ td.catup .resnum {
 #gallery > div.anime > a::before {
   background-color: rgb(0, 80, 0);
 }
+#image-view {
+  background-color: black;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+}
+#image-view > .image-slider {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: row;
+  transition: all 300ms 0s ease;
+  width: 100%;
+  height: 100%;
+}
+#image-view > .image-slider > a {
+  display: block;
+  flex-shrink: 0;
+  width: 100%;
+  height: 100%;
+}
+#image-view > .image-slider > a > img {
+  display: block;
+  object-fit: contain;
+  object-position: top;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+#image-view > .image-number {
+  background-color: rgba(200, 200, 200, 0.8);
+  color: rgb(20, 20, 20);
+  font-weight: bold;
+  font-size: small;
+  position: fixed;
+  top: 0;
+  right: 0;
+  padding: 0.5em;
+}
 
 `);
+        class ImageViewer {
+            constructor(anchors) {
+                this.images = anchors.map((i, e) => {
+                    const a = e.cloneNode(true);
+                    const img = a.querySelector("img");
+                    if (img == null) {
+                        return;
+                    }
+                    const ext = a.href.split(".").slice(-1)[0].toLowerCase();
+                    if (ext !== "mp4" && ext !== "webm") {
+                        img.src = a.href;
+                        img.removeAttribute("width");
+                        img.removeAttribute("height");
+                    }
+                    return a;
+                });
+                this.index = 0;
+            }
+            page(i) {
+                if (0 <= i && i < this.images.length) {
+                    $("#image-view > .image-slider").css("transform", `translate(calc(-100% * ${i}))`);
+                    $("#image-view > .image-number").text(`${i + 1}/${this.images.length}`);
+                }
+                else {
+                    console.error("illegal page number", i);
+                }
+            }
+            next() {
+                if (this.index < this.images.length - 1) {
+                    this.index++;
+                    this.page(this.index);
+                }
+            }
+            prev() {
+                if (0 < this.index) {
+                    this.index--;
+                    this.page(this.index);
+                }
+            }
+            show(image) {
+                const slider = $('<div class="image-slider">')
+                    .on("dblclick", (e) => {
+                    this.destroy();
+                    e.stopPropagation();
+                    e.preventDefault();
+                })
+                    .append(this.images);
+                const number = $('<div class="image-number">');
+                const viewer = $('<div id="image-view">')
+                    .on("keydown", (e) => {
+                    if (e.key === "ArrowLeft") {
+                        this.prev();
+                    }
+                    else if (e.key === "ArrowRight") {
+                        this.next();
+                    }
+                    else if (e.key === "Escape") {
+                        this.destroy();
+                    }
+                    e.stopPropagation();
+                    e.preventDefault();
+                })
+                    .on("dblclick", (e) => {
+                    this.destroy();
+                    e.stopPropagation();
+                    e.preventDefault();
+                })
+                    .on("click", (e) => {
+                    if (e.offsetX < e.target.clientWidth / 4) {
+                        this.prev();
+                    }
+                    else if (e.offsetX > e.target.clientWidth * 3 / 4) {
+                        this.next();
+                    }
+                    e.stopPropagation();
+                    e.preventDefault();
+                })
+                    .on("wheel", (e) => {
+                    if (!(e.originalEvent instanceof WheelEvent)) {
+                        return;
+                    }
+                    if (e.originalEvent.deltaY < 0) {
+                        this.prev();
+                    }
+                    else if (e.originalEvent.deltaY > 0) {
+                        this.next();
+                    }
+                    e.stopPropagation();
+                    e.preventDefault();
+                })
+                    .append(slider)
+                    .append(number);
+                $("#gallery").css("display", "none");
+                $("body").append(viewer);
+                this.images.each((i, e) => {
+                    if (e.href === image.href) {
+                        this.index = i;
+                        this.page(this.index);
+                    }
+                });
+            }
+            destroy() {
+                $("#gallery").css("display", "");
+                $("div#image-view").remove();
+            }
+        }
         const toggleButton = (e) => {
             e.preventDefault();
             return $(e.target).toggleClass("enable").hasClass("enable");
@@ -504,14 +653,16 @@ td.catup .resnum {
             return td.parent().parent().parent();
         };
         const galleryCreate = () => {
-            const images = $("div.thre > table > tbody > tr > td.rtd a > img:visible");
-            if (images.length === 0) {
+            const anchors = $("div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+            if (anchors.length === 0) {
                 return;
             }
+            const imageViewer = new ImageViewer(anchors);
             const gallery = $("<div id='gallery' tabindex='0'>")
                 .on("dblclick", (e) => {
                 if (e.target.tagName === "DIV") {
                     galleryDestroy();
+                    imageViewer.destroy();
                     e.stopPropagation();
                     e.preventDefault();
                 }
@@ -522,9 +673,20 @@ td.catup .resnum {
                     e.stopPropagation();
                     e.preventDefault();
                 }
+            })
+                .on("click", (e) => {
+                if (!(e.target instanceof HTMLImageElement)) {
+                    return;
+                }
+                if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
+                    return;
+                }
+                imageViewer.show(e.target.parentElement);
+                e.stopPropagation();
+                e.preventDefault();
             });
             const quote = (anchor) => {
-                const text = $(anchor)
+                const text = anchor
                     .next("blockquote")
                     .text()
                     .replace(/>[^\n]+\n?/, "");
@@ -542,19 +704,19 @@ td.catup .resnum {
                 }
             };
             const make = (index, anchor) => {
-                var _a;
-                const ext = (_a = anchor.getAttribute("href")) === null || _a === void 0 ? void 0 : _a.split(".").slice(-1)[0].toLowerCase();
+                const a = $(anchor);
+                const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
                 if (ext === "mp4" || ext === "webm") {
-                    return $("<div>").addClass("movie").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+                    return $("<div>").addClass("movie").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
                 }
-                else if (ext == "gif") {
-                    return $("<div>").addClass("anime").append($(anchor).clone().attr("data-ext", ext), quote(anchor)).get(0);
+                else if (ext === "gif") {
+                    return $("<div>").addClass("anime").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
                 }
                 else {
-                    return $("<div>").append($(anchor).clone(), quote(anchor)).get(0);
+                    return $("<div>").append(a.clone(), quote(a)).get(0);
                 }
             };
-            $("body").append(gallery.append(images.parent().map(make)));
+            $("body").append(gallery.append(anchors.map(make)));
             $("#gallery").trigger("focus");
         };
         const galleryDestroy = () => {
@@ -799,7 +961,7 @@ td.catup .resnum {
                         autoScr.status("auto-scroll started");
                     }
                 }
-                else if (e.key == "s") {
+                else if (e.key === "s") {
                     $("#contres > a").trigger("click");
                 }
             });
@@ -849,18 +1011,35 @@ td.catup .resnum {
                 newcat[key] = cat[key];
                 saveCatalog(newcat, "1");
             });
-            $("div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
-                var _a;
+            $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
                 const img = $(e.target);
-                const ext = (_a = img.parent().attr("href")) === null || _a === void 0 ? void 0 : _a.split(".").slice(-1)[0].toLowerCase();
+                const src = img.attr("src");
+                const href = img.parent().attr("href");
+                if (src == null || href == null) {
+                    return;
+                }
+                const ext = href.split(".").slice(-1)[0].toLowerCase();
                 if (ext === "mp4" || ext === "webm") {
-                    $(e.target).trigger("click");
+                    img.trigger("click");
+                }
+                else if (ext === "gif") {
+                    img.data("thumb", src).attr("src", href);
                 }
             });
-            $("div.thre > table > tbody > tr > td.rtd").on("mouseleave", (e) => {
-                const video = $("video", e.target);
-                if (video.length > 0) {
-                    video.next().trigger("click");
+            $("div.thre").on("mouseout", (e) => {
+                if (e.target.tagName === "DIV" || e.target.tagName === "TD") {
+                    const video = $("video.extendWebm", e.target);
+                    if (video.length > 0) {
+                        video.next().trigger("click");
+                        e.stopPropagation();
+                    }
+                }
+                else if (e.target.tagName === "IMG") {
+                    const thumb = $(e.target).data("thumb");
+                    if (thumb != null) {
+                        $(e.target).attr("src", thumb).removeData("thumb");
+                        e.stopPropagation();
+                    }
                 }
             });
             const autoScr = new AutoScroller();

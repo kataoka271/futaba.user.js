@@ -408,6 +408,116 @@
 @@include("Futaba-res.user.css")
 `);
 
+    class ImageViewer {
+      images: JQuery<HTMLAnchorElement>;
+      index: number;
+
+      constructor(anchors: JQuery<HTMLAnchorElement>) {
+        this.images = anchors.map((i, e) => {
+          const a = e.cloneNode(true) as HTMLAnchorElement;
+          const img = a.querySelector<HTMLImageElement>("img");
+          if (img == null) {
+            return;
+          }
+          const ext = a.href.split(".").slice(-1)[0].toLowerCase();
+          if (ext !== "mp4" && ext !== "webm") {
+            img.src = a.href;
+            img.removeAttribute("width");
+            img.removeAttribute("height");
+          }
+          return a;
+        });
+        this.index = 0;
+      }
+
+      page(i: number) {
+        if (0 <= i && i < this.images.length) {
+          $("#image-view > .image-slider").css("transform", `translate(calc(-100% * ${i}))`);
+          $("#image-view > .image-number").text(`${i + 1}/${this.images.length}`);
+        } else {
+          console.error("illegal page number", i);
+        }
+      }
+
+      next() {
+        if (this.index < this.images.length - 1) {
+          this.index++;
+          this.page(this.index);
+        }
+      }
+
+      prev() {
+        if (0 < this.index) {
+          this.index--;
+          this.page(this.index);
+        }
+      }
+
+      show(image: HTMLAnchorElement) {
+        const slider = $('<div class="image-slider">')
+          .on("dblclick", (e) => {
+            this.destroy();
+            e.stopPropagation();
+            e.preventDefault();
+          })
+          .append(this.images);
+        const number = $('<div class="image-number">');
+        const viewer = $('<div id="image-view">')
+          .on("keydown", (e) => {
+            if (e.key === "ArrowLeft") {
+              this.prev();
+            } else if (e.key === "ArrowRight") {
+              this.next();
+            } else if (e.key === "Escape") {
+              this.destroy();
+            }
+            e.stopPropagation();
+            e.preventDefault();
+          })
+          .on("dblclick", (e) => {
+            this.destroy();
+            e.stopPropagation();
+            e.preventDefault();
+          })
+          .on("click", (e) => {
+            if (e.offsetX < e.target.clientWidth / 4) {
+              this.prev();
+            } else if (e.offsetX > e.target.clientWidth * 3 / 4) {
+              this.next();
+            }
+            e.stopPropagation();
+            e.preventDefault();
+          })
+          .on("wheel", (e) => {
+            if (!(e.originalEvent instanceof WheelEvent)) {
+              return;
+            }
+            if (e.originalEvent.deltaY < 0) {
+              this.prev();
+            } else if (e.originalEvent.deltaY > 0) {
+              this.next();
+            }
+            e.stopPropagation();
+            e.preventDefault();
+          })
+          .append(slider)
+          .append(number);
+        $("#gallery").css("display", "none");
+        $("body").append(viewer);
+        this.images.each((i, e) => {
+          if (e.href === image.href) {
+            this.index = i;
+            this.page(this.index);
+          }
+        });
+      }
+
+      destroy() {
+        $("#gallery").css("display", "");
+        $("div#image-view").remove();
+      }
+    }
+
     const toggleButton = (e: JQuery.TriggeredEvent) => {
       e.preventDefault();
       return $(e.target).toggleClass("enable").hasClass("enable");
@@ -422,10 +532,12 @@
       if (anchors.length === 0) {
         return;
       }
+      const imageViewer = new ImageViewer(anchors);
       const gallery = $("<div id='gallery' tabindex='0'>")
         .on("dblclick", (e) => {
           if (e.target.tagName === "DIV") {
             galleryDestroy();
+            imageViewer.destroy();
             e.stopPropagation();
             e.preventDefault();
           }
@@ -436,6 +548,17 @@
             e.stopPropagation();
             e.preventDefault();
           }
+        })
+        .on("click", (e) => {
+          if (!(e.target instanceof HTMLImageElement)) {
+            return;
+          }
+          if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
+            return;
+          }
+          imageViewer.show(e.target.parentElement);
+          e.stopPropagation();
+          e.preventDefault();
         });
       const quote = (anchor: JQuery<HTMLElement>): JQuery<HTMLElement> => {
         const text = anchor
