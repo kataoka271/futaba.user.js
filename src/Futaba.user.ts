@@ -471,6 +471,8 @@
           this.next();
         } else if (e.key === "Escape") {
           this.destroy();
+        } else {
+          return;
         }
         e.stopPropagation();
         e.preventDefault();
@@ -724,16 +726,16 @@
       }
     }
 
-    const ancestor = (td: JQuery<HTMLElement>): JQuery<HTMLElement> => {
-      return td.parent().parent().parent();
-    };
-
-    const gallery = new Gallery();
-
-    const treeview = new TreeView();
-
     class Command {
-      create() {
+      gallery: Gallery;
+      treeview: TreeView;
+
+      constructor(gallery: Gallery, treeview: TreeView) {
+        this.gallery = gallery;
+        this.treeview = treeview;
+      }
+
+      buttons() {
         return [
           $('<a class="cornar-first" id="gallery-button">画像一覧</a>').on("click", (e) => this.toggleGallery(e)),
           $("<a>画像</a>").on("click", (e) => this.filterImages(e)),
@@ -749,75 +751,44 @@
 
       toggleGallery(e: JQuery.TriggeredEvent) {
         if (this.toggleButton(e)) {
-          gallery.create();
+          this.gallery.create();
         } else {
-          gallery.destroy();
+          this.gallery.destroy();
         }
       }
 
       filterImages(e: JQuery.TriggeredEvent) {
         if (this.toggleButton(e)) {
           const res = $("div.thre > table > tbody > tr > td.rtd");
-          ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "none");
+          res.filter((i, e) => $("img", e).length === 0).closest("table").css("display", "none");
         } else {
           const res = $("div.thre > table > tbody > tr > td.rtd");
-          ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "");
+          res.filter((i, e) => $("img", e).length === 0).closest("table").css("display", "");
         }
       }
 
       filterResNew(e: JQuery.TriggeredEvent) {
         if (this.toggleButton(e)) {
           const res = $("div.thre > table > tbody > tr > td.rtd");
-          ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
+          res.filter((i, e) => !$(e).hasClass("resnew")).closest("table").css("display", "none");
         } else {
           const res = $("div.thre > table > tbody > tr > td.rtd");
-          ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
+          res.filter((i, e) => !$(e).hasClass("resnew")).closest("table").css("display", "");
         }
       }
 
       toggleTreeView(e: JQuery.TriggeredEvent) {
         if (this.toggleButton(e)) {
-          treeview.make();
+          this.treeview.make();
         } else {
-          treeview.flat();
+          this.treeview.flat();
         }
       }
     }
 
-    const command = new Command();
+    type UpdateParam = { preserve: boolean };
 
-    const addCommands = (autoScr: AutoScroller) => {
-      $("body").append(
-        $('<div id="commands">').append(
-          command.create(),
-          " ",
-          new AutoUpdateSelect(
-            {
-              onUpdate: () => $("#contres > a").trigger("click", { ignore: true }),
-              onSelect: (text, value) => {
-                console.log("auto-scroll", text, value);
-                if (text === "OFF") {
-                  autoScr.stop();
-                  autoScr.status("auto-scroll stopped");
-                } else {
-                  autoScr.start();
-                  autoScr.status("auto-scroll started");
-                }
-              },
-            },
-            ["OFF", 0],
-            ["SCR", 0], // auto-scroll, no auto-update
-            ["15s", 15],
-            ["30s", 30],
-            ["1min", 60]
-          ).get()
-        )
-      );
-    };
-
-    type WatcherParam = { ignore: boolean };
-
-    class Watcher {
+    class Updater {
       _cat: Catalog;
       _key: string;
 
@@ -826,7 +797,7 @@
         this._key = key;
       }
 
-      onTimer(retry: number, param?: WatcherParam) {
+      onTimer(retry: number, param?: UpdateParam) {
         const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
         const resnew = res.filter((i, e) => {
           const resnum = parseInt(e.textContent ?? "0");
@@ -839,53 +810,55 @@
             return false;
           }
         });
-        if (resnew.length > 0 && !param?.ignore) {
+        if (resnew.length > 0 && !param?.preserve) {
           this._cat[this._key].res = res.length;
           this._cat[this._key].readres = res.length;
           const newcat: Catalog = loadCatalog();
           newcat[this._key] = this._cat[this._key];
           saveCatalog(newcat, "1");
         } else if (retry > 0) {
-          setTimeout((retry: number, param?: WatcherParam) => this.onTimer(retry, param), 100, retry - 1, param);
+          setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, retry - 1, param);
         }
       }
 
-      start() {
+      watch() {
         $("#contres > a").on("click", (e, param) => {
-          setTimeout((retry: number, param?: WatcherParam) => this.onTimer(retry, param), 100, 10, param);
+          setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, 10, param);
         });
+      }
+
+      update(param?: UpdateParam) {
+        $("#contres > a").trigger("click", param);
       }
     }
 
-    const addHotkeys = (autoScr: AutoScroller) => {
-      $(window).on("keydown", (e) => {
-        if (document.activeElement?.tagName === "INPUT") {
-          return;
+    const onHotkey = (updater: Updater, autoScr: AutoScroller, e: JQuery.TriggeredEvent) => {
+      if (document.activeElement?.tagName === "INPUT") {
+        return;
+      }
+      if (e.key === "a" && autoScr.tm / 2 >= 100) {
+        autoScr.tm /= 2;
+        autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+      } else if (e.key === "A" && autoScr.tm * 2 < 180000) {
+        autoScr.tm *= 2;
+        autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+      } else if (e.key === "v" && autoScr.dy * 2 < 10000) {
+        autoScr.dy *= 2;
+        autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+      } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
+        autoScr.dy /= 2;
+        autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+      } else if (e.key === "S" && autoScr.running) {
+        if (!autoScr.paused) {
+          autoScr.pause();
+          autoScr.status("auto-scroll paused", true);
+        } else {
+          autoScr.resume();
+          autoScr.status("auto-scroll started");
         }
-        if (e.key === "a" && autoScr.tm / 2 >= 100) {
-          autoScr.tm /= 2;
-          autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "A" && autoScr.tm * 2 < 180000) {
-          autoScr.tm *= 2;
-          autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "v" && autoScr.dy * 2 < 10000) {
-          autoScr.dy *= 2;
-          autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "V" && autoScr.dy / 2 >= 1) {
-          autoScr.dy /= 2;
-          autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-        } else if (e.key === "S" && autoScr.running) {
-          if (!autoScr.paused) {
-            autoScr.pause();
-            autoScr.status("auto-scroll paused", true);
-          } else {
-            autoScr.resume();
-            autoScr.status("auto-scroll started");
-          }
-        } else if (e.key === "s") {
-          $("#contres > a").trigger("click");
-        }
-      });
+      } else if (e.key === "s") {
+        updater.update();
+      }
     };
 
     const initialize = () => {
@@ -968,12 +941,37 @@
         }
       });
 
+      const updater = new Updater(cat, key);
+      updater.watch();
+
       const autoScr = new AutoScroller();
+      const select = new AutoUpdateSelect(
+        {
+          onUpdate: () => updater.update({ preserve: true }),
+          onSelect: (text, value) => {
+            console.log("auto-scroll", text, value);
+            if (text === "OFF") {
+              autoScr.stop();
+              autoScr.status("auto-scroll stopped");
+            } else {
+              autoScr.start();
+              autoScr.status("auto-scroll started");
+            }
+          },
+        },
+        ["OFF", 0],
+        ["SCR", 0], // auto-scroll, no auto-update
+        ["15s", 15],
+        ["30s", 30],
+        ["1min", 60]
+      );
+      const gallery = new Gallery();
+      const treeview = new TreeView();
+      const command = new Command(gallery, treeview);
 
       $("body").append(autoScr.status());
-      addCommands(autoScr);
-      addHotkeys(autoScr);
-      new Watcher(cat, key).start();
+      $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
+      $(window).on("keydown", (e) => onHotkey(updater, autoScr, e));
     };
 
     initialize();
