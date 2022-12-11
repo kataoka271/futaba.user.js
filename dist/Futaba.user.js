@@ -517,30 +517,21 @@ td.catup .resnum {
   flex-basis: 100%;
   flex-shrink: 0;
   text-align: center;
-  width: 100%;
-  height: 100%;
 }
 #image-view > .image-slider > div > div {
   display: inline-block;
-  width: auto;
-  height: 100%;
 }
 #image-view > .image-slider > div > div > video {
   object-fit: contain;
   object-position: center;
   max-width: calc(100% - 30px) !important;
-  max-height: 100% !important;
-}
-#image-view > .image-slider > div > a {
-  display: inline-block;
-  width: auto;
-  height: 100%;
+  max-height: calc(100vh - 50px) !important;
 }
 #image-view > .image-slider > div > a > img {
   object-fit: contain;
   object-position: center;
   max-width: 100%;
-  max-height: 100%;
+  max-height: calc(100vh - 50px);
 }
 #image-view > .image-thumbs {
   display: flex;
@@ -631,38 +622,36 @@ td.catup .resnum {
                     this.page(this.index);
                 }
             }
+            onKeyDown(e) {
+                if (e.key === "ArrowLeft") {
+                    this.prev();
+                }
+                else if (e.key === "ArrowRight") {
+                    this.next();
+                }
+                else if (e.key === "Escape") {
+                    this.destroy();
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            }
+            onWheel(e) {
+                if (!(e.originalEvent instanceof WheelEvent)) {
+                    return;
+                }
+                if (e.originalEvent.deltaY < 0) {
+                    this.prev();
+                }
+                else if (e.originalEvent.deltaY > 0) {
+                    this.next();
+                }
+                e.stopPropagation();
+                e.preventDefault();
+            }
             show(image) {
                 const viewer = $('<div id="image-view" tabindex="0">')
-                    .on("keydown", (e) => {
-                    if (e.key === "ArrowLeft") {
-                        this.prev();
-                    }
-                    else if (e.key === "ArrowRight") {
-                        this.next();
-                    }
-                    else if (e.key === "Escape") {
-                        this.destroy();
-                    }
-                    e.stopPropagation();
-                    e.preventDefault();
-                })
-                    .on("click", (e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                })
-                    .on("wheel", (e) => {
-                    if (!(e.originalEvent instanceof WheelEvent)) {
-                        return;
-                    }
-                    if (e.originalEvent.deltaY < 0) {
-                        this.prev();
-                    }
-                    else if (e.originalEvent.deltaY > 0) {
-                        this.next();
-                    }
-                    e.stopPropagation();
-                    e.preventDefault();
-                })
+                    .on("keydown", (e) => this.onKeyDown(e))
+                    .on("wheel", (e) => this.onWheel(e))
                     .append($('<div class="image-slider">').append(this.images))
                     .append($('<div class="image-thumbs">').append(this.thumbs))
                     .append($('<div class="image-number">'));
@@ -678,50 +667,52 @@ td.catup .resnum {
             }
             destroy() {
                 $("#gallery").css("display", "");
+                $("#gallery").trigger("focus");
                 $("div#image-view").remove();
             }
         }
-        const toggleButton = (e) => {
-            e.preventDefault();
-            return $(e.target).toggleClass("enable").hasClass("enable");
-        };
-        const ancestor = (td) => {
-            return td.parent().parent().parent();
-        };
-        const galleryCreate = () => {
-            const anchors = $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
-            if (anchors.length === 0) {
-                return;
+        class Gallery {
+            create() {
+                const anchors = $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+                if (anchors.length === 0) {
+                    return;
+                }
+                this.imageViewer = new ImageViewer(anchors);
+                $('<div id="gallery" tabindex="0">')
+                    .on("dblclick", (e) => this.onDblClick(e))
+                    .on("keydown", (e) => this.onKeyDown(e))
+                    .on("click", (e) => this.onClick(e))
+                    .append(anchors.map((i, e) => this.make(e)))
+                    .appendTo("body")
+                    .trigger("focus");
             }
-            const imageViewer = new ImageViewer(anchors);
-            const gallery = $('<div id="gallery" tabindex="0">')
-                .on("dblclick", (e) => {
+            onDblClick(e) {
                 if (e.target.tagName === "DIV") {
-                    galleryDestroy();
-                    imageViewer.destroy();
+                    this.destroy();
                     e.stopPropagation();
                     e.preventDefault();
                 }
-            })
-                .on("keydown", (e) => {
+            }
+            onKeyDown(e) {
                 if (e.key === "Escape" || e.key === "Esc") {
-                    galleryDestroy();
+                    this.destroy();
                     e.stopPropagation();
                     e.preventDefault();
                 }
-            })
-                .on("click", (e) => {
+            }
+            onClick(e) {
+                var _a;
                 if (!(e.target instanceof HTMLImageElement)) {
                     return;
                 }
                 if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
                     return;
                 }
-                imageViewer.show(e.target.parentElement);
+                (_a = this.imageViewer) === null || _a === void 0 ? void 0 : _a.show(e.target.parentElement);
                 e.stopPropagation();
                 e.preventDefault();
-            });
-            const quote = (anchor) => {
+            }
+            quote(anchor) {
                 const text = anchor
                     .next("blockquote")
                     .text()
@@ -738,81 +729,83 @@ td.catup .resnum {
                 else {
                     return $("<span>").text(text).before("<br>");
                 }
-            };
-            const make = (index, anchor) => {
+            }
+            make(anchor) {
                 const a = $(anchor);
                 const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
                 if (ext === "mp4" || ext === "webm") {
-                    return $("<div>").addClass("movie").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
+                    return $("<div>").addClass("movie").append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
                 }
                 else if (ext === "gif") {
-                    return $("<div>").addClass("anime").append(a.clone().attr("data-ext", ext), quote(a)).get(0);
+                    return $("<div>").addClass("anime").append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
                 }
                 else {
-                    return $("<div>").append(a.clone(), quote(a)).get(0);
+                    return $("<div>").append(a.clone(), this.quote(a)).get(0);
                 }
-            };
-            $("body").append(gallery.append(anchors.map(make)));
-            $("#gallery").trigger("focus");
-        };
-        const galleryDestroy = () => {
-            $("#gallery-button").removeClass("enable");
-            $("#gallery").remove();
-        };
-        const makeTreeView = () => {
-            let quoteList = [];
-            $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($('<span id="resnew">'));
-            $($("div.thre > table").get().reverse()).each((i, table) => {
-                const td = $("td.rtd", table).first();
-                const text = $("blockquote, a, span", td)
-                    .contents()
-                    .filter((i, e) => {
-                    return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
-                })
-                    .text();
-                const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
-                let tdCloned = null;
-                quoteList = quoteList.filter((item) => {
-                    if (!text.includes(item.quot)) {
-                        return true;
-                    }
-                    else {
-                        if (!td.hasClass("resnew") && item.resnew) {
-                            if (tdCloned == null) {
-                                tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
-                            }
-                            tdCloned.children("blockquote").first().after(item.elem);
+            }
+            destroy() {
+                var _a;
+                $("#gallery-button").removeClass("enable");
+                $("#gallery").remove();
+                (_a = this.imageViewer) === null || _a === void 0 ? void 0 : _a.destroy();
+            }
+        }
+        class TreeView {
+            make() {
+                let quoteList = [];
+                $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($('<span id="resnew">'));
+                $($("div.thre > table").get().reverse()).each((i, table) => {
+                    const td = $("td.rtd", table).first();
+                    const text = $("blockquote, a, span", td)
+                        .contents()
+                        .filter((i, e) => {
+                        return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
+                    })
+                        .text();
+                    const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
+                    let tdCloned = null;
+                    quoteList = quoteList.filter((item) => {
+                        if (!text.includes(item.quot)) {
+                            return true;
                         }
                         else {
-                            td.children("blockquote").first().after(item.elem);
+                            if (!td.hasClass("resnew") && item.resnew) {
+                                if (tdCloned == null) {
+                                    tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
+                                }
+                                tdCloned.children("blockquote").first().after(item.elem);
+                            }
+                            else {
+                                td.children("blockquote").first().after(item.elem);
+                            }
+                            return false;
                         }
-                        return false;
+                    });
+                    if (quote.length > 0) {
+                        const mo = />([^>]+)$/.exec(quote.text());
+                        if (mo != null) {
+                            quoteList.push({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
+                        }
                     }
                 });
-                if (quote.length > 0) {
-                    const mo = />([^>]+)$/.exec(quote.text());
-                    if (mo != null) {
-                        quoteList.push({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
+            }
+            flat() {
+                const array = [];
+                $("div.thre table > tbody > tr > td.rtd > span:first-child").each((i, e) => {
+                    const span = $(e);
+                    const resnum = parseInt(span.text() || "0");
+                    const table = span.parent().parent().parent().parent();
+                    if (table.hasClass("cloned") || array[resnum] != null) {
+                        table.remove();
                     }
-                }
-            });
-        };
-        const makeFlatView = () => {
-            const array = [];
-            $("div.thre table > tbody > tr > td.rtd > span:first-child").each((i, e) => {
-                const span = $(e);
-                const resnum = parseInt(span.text() || "0");
-                const table = span.parent().parent().parent().parent();
-                if (table.hasClass("cloned") || array[resnum] != null) {
-                    table.remove();
-                }
-                else {
-                    array[resnum] = table;
-                }
-            });
-            $("div.thre > span.maxres").after(array);
-            $("span#resnew").remove();
-        };
+                    else {
+                        array[resnum] = table;
+                    }
+                });
+                $("div.thre > span.maxres").after(array);
+                $("span#resnew").remove();
+            }
+        }
         class AutoScroller {
             constructor() {
                 this._timer = 0;
@@ -871,20 +864,34 @@ td.catup .resnum {
                 return this._timer > 0;
             }
         }
-        const addCommands = (autoScr) => {
-            $("body").append($('<div id="commands">').append($('<a class="cornar-first" id="gallery-button">')
-                .text("画像一覧")
-                .on("click", (e) => {
-                if (toggleButton(e)) {
-                    galleryCreate();
+        const ancestor = (td) => {
+            return td.parent().parent().parent();
+        };
+        const gallery = new Gallery();
+        const treeview = new TreeView();
+        class Command {
+            create() {
+                return [
+                    $('<a class="cornar-first" id="gallery-button">画像一覧</a>').on("click", (e) => this.toggleGallery(e)),
+                    $("<a>画像</a>").on("click", (e) => this.filterImages(e)),
+                    $("<a>新着</a>").on("click", (e) => this.filterResNew(e)),
+                    $('<a class="cornar-last">ツリー表示</a>').on("click", (e) => this.toggleTreeView(e)),
+                ];
+            }
+            toggleButton(e) {
+                e.preventDefault();
+                return $(e.target).toggleClass("enable").hasClass("enable");
+            }
+            toggleGallery(e) {
+                if (this.toggleButton(e)) {
+                    gallery.create();
                 }
                 else {
-                    galleryDestroy();
+                    gallery.destroy();
                 }
-            }), $("<a>")
-                .text("画像")
-                .on("click", (e) => {
-                if (toggleButton(e)) {
+            }
+            filterImages(e) {
+                if (this.toggleButton(e)) {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
                     ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "none");
                 }
@@ -892,10 +899,9 @@ td.catup .resnum {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
                     ancestor(res.filter((i, e) => $("img", e).length === 0)).css("display", "");
                 }
-            }), $("<a>")
-                .text("新着")
-                .on("click", (e) => {
-                if (toggleButton(e)) {
+            }
+            filterResNew(e) {
+                if (this.toggleButton(e)) {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
                     ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "none");
                 }
@@ -903,16 +909,19 @@ td.catup .resnum {
                     const res = $("div.thre > table > tbody > tr > td.rtd");
                     ancestor(res.filter((i, e) => !$(e).hasClass("resnew"))).css("display", "");
                 }
-            }), $('<a class="cornar-last">')
-                .text("ツリー表示")
-                .on("click", (e) => {
-                if (toggleButton(e)) {
-                    makeTreeView();
+            }
+            toggleTreeView(e) {
+                if (this.toggleButton(e)) {
+                    treeview.make();
                 }
                 else {
-                    makeFlatView();
+                    treeview.flat();
                 }
-            }), " ", new AutoUpdateSelect({
+            }
+        }
+        const command = new Command();
+        const addCommands = (autoScr) => {
+            $("body").append($('<div id="commands">').append(command.create(), " ", new AutoUpdateSelect({
                 onUpdate: () => $("#contres > a").trigger("click", { ignore: true }),
                 onSelect: (text, value) => {
                     console.log("auto-scroll", text, value);
