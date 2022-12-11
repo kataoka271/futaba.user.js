@@ -622,6 +622,11 @@ td.catup .resnum {
                     this.page(this.index);
                 }
             }
+            onDblClick(e) {
+                this.destroy();
+                e.stopPropagation();
+                e.preventDefault();
+            }
             onKeyDown(e) {
                 if (e.key === "ArrowLeft") {
                     this.prev();
@@ -653,6 +658,7 @@ td.catup .resnum {
             }
             show(image) {
                 const viewer = $('<div id="image-view" tabindex="0">')
+                    .on("dblclick", (e) => this.onDblClick(e))
                     .on("keydown", (e) => this.onKeyDown(e))
                     .on("wheel", (e) => this.onWheel(e))
                     .append($('<div class="image-slider">').append(this.images))
@@ -894,22 +900,30 @@ td.catup .resnum {
             }
             filterImages(e) {
                 if (this.toggleButton(e)) {
-                    const res = $("div.thre > table > tbody > tr > td.rtd");
-                    res.filter((i, e) => $("img", e).length === 0).closest("table").css("display", "none");
+                    $("div.thre > table > tbody > tr > td.rtd")
+                        .filter((i, e) => $("img", e).length === 0)
+                        .closest("table")
+                        .css("display", "none");
                 }
                 else {
-                    const res = $("div.thre > table > tbody > tr > td.rtd");
-                    res.filter((i, e) => $("img", e).length === 0).closest("table").css("display", "");
+                    $("div.thre > table > tbody > tr > td.rtd")
+                        .filter((i, e) => $("img", e).length === 0)
+                        .closest("table")
+                        .css("display", "");
                 }
             }
             filterResNew(e) {
                 if (this.toggleButton(e)) {
-                    const res = $("div.thre > table > tbody > tr > td.rtd");
-                    res.filter((i, e) => !$(e).hasClass("resnew")).closest("table").css("display", "none");
+                    $("div.thre > table > tbody > tr > td.rtd")
+                        .filter((i, e) => !$(e).hasClass("resnew"))
+                        .closest("table")
+                        .css("display", "none");
                 }
                 else {
-                    const res = $("div.thre > table > tbody > tr > td.rtd");
-                    res.filter((i, e) => !$(e).hasClass("resnew")).closest("table").css("display", "");
+                    $("div.thre > table > tbody > tr > td.rtd")
+                        .filter((i, e) => !$(e).hasClass("resnew"))
+                        .closest("table")
+                        .css("display", "");
                 }
             }
             toggleTreeView(e) {
