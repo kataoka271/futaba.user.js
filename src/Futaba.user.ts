@@ -254,7 +254,7 @@
       _column_count: number;
 
       constructor(column_count = 8) {
-        this._table = $('<table border="1" align="center">').css("display", "none");
+        this._table = $('<table border="1" align="center">').hide();
         this._tbody = $("<tbody>").appendTo(this._table);
         this._tr = $("<tr>").appendTo(this._tbody);
         this._item_count = 0;
@@ -264,7 +264,7 @@
       append(elems: JQuery<HTMLElement>) {
         elems.each((i, e) => {
           if (this._item_count === 0) {
-            this._table.css("display", "");
+            this._table.show();
           }
           this._item_count += 1;
           if (this._item_count % this._column_count === 0) {
@@ -275,7 +275,7 @@
       }
 
       clear() {
-        this._table.css("display", "none");
+        this._table.hide();
         this._tbody.empty();
         this._tr = $("<tr>").appendTo(this._tbody);
         this._item_count = 0;
@@ -408,6 +408,16 @@
 @@include("Futaba-res.user.css")
 `);
 
+    const q_thre = "div.thre";
+    const q_table = "div.thre > table";
+    const q_res = "div.thre > table > tbody > tr > td.rtd";
+    const q_res_resnum = "div.thre table > tbody > tr > td.rtd > span:first-child"; // support tree view mode
+    const q_res_notnew = "div.thre > table > tbody > tr > td.rtd:not(.resnew)";
+    const q_res_visible_images = "div.thre > table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
+    const q_maxres = "div.thre > span.maxres"; // tree view recovery point
+    const q_tdrtd = "td.rtd";
+    const q_contres = "#contres > a";
+
     class ImageViewer {
       images: JQuery<HTMLElement>;
       thumbs: JQuery<HTMLElement>;
@@ -486,7 +496,7 @@
       }
 
       show(image: HTMLAnchorElement) {
-        const anchors = $<HTMLAnchorElement>("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+        const anchors = $<HTMLAnchorElement>(q_res_visible_images).parent();
         this.images = anchors.map((i, anchor) => {
           const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
           if (ext === "mp4" || ext === "webm") {
@@ -509,7 +519,7 @@
           .append($('<div class="image-slider">').append(this.images))
           .append($('<div class="image-thumbs">').append(this.thumbs))
           .append($('<div class="image-number">'));
-        $("#gallery").css("display", "none");
+        $("#gallery").hide();
         $("body").append(viewer);
         $("#image-view").trigger("focus");
         $("#image-view > .image-slider").css("transition", "all 0s 0s ease");
@@ -525,9 +535,8 @@
       }
 
       destroy() {
-        $("#gallery").css("display", "");
-        $("#gallery").trigger("focus");
-        $("div#image-view").remove();
+        $("#gallery").show().trigger("focus");
+        $("#image-view").remove();
       }
     }
 
@@ -539,7 +548,7 @@
       }
 
       create() {
-        const anchors = $<HTMLAnchorElement>("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+        const anchors = $<HTMLAnchorElement>(q_res_visible_images).parent();
         if (anchors.length === 0) {
           return;
         }
@@ -619,9 +628,9 @@
     class TreeView {
       make() {
         let quoteList: { quot: string; elem: HTMLElement; resnew: boolean }[] = [];
-        $("div.thre > table > tbody > tr > td.rtd:not(.resnew)").last().parent().parent().parent().after($('<span id="resnew">'));
-        $($("div.thre > table").get().reverse()).each((i, table) => {
-          const td = $("td.rtd", table).first();
+        $(q_res_notnew).last().closest("table").after($('<span id="resnew">'));
+        $($(q_table).get().reverse()).each((i, table) => {
+          const td = $(q_tdrtd, table).first();
           const text = $("blockquote, a, span", td)
             .contents()
             .filter((i, e) => {
@@ -636,7 +645,7 @@
             } else {
               if (!td.hasClass("resnew") && item.resnew) {
                 if (tdCloned == null) {
-                  tdCloned = $("td.rtd", $(table).clone(true).insertAfter("span#resnew").addClass("cloned")).first();
+                  tdCloned = $(q_tdrtd, $(table).clone(true).insertAfter("#resnew").addClass("cloned")).first();
                 }
                 tdCloned.children("blockquote").first().after(item.elem);
               } else {
@@ -656,18 +665,18 @@
 
       flat() {
         const array: JQuery<HTMLElement>[] = [];
-        $("div.thre table > tbody > tr > td.rtd > span:first-child").each((i, e) => {
+        $(q_res_resnum).each((i, e) => {
           const span = $(e);
           const resnum = parseInt(span.text() || "0");
-          const table = span.parent().parent().parent().parent();
+          const table = span.closest("table");
           if (table.hasClass("cloned") || array[resnum] != null) {
             table.remove();
           } else {
             array[resnum] = table;
           }
         });
-        $("div.thre > span.maxres").after(array);
-        $("span#resnew").remove();
+        $(q_maxres).after(array);
+        $("#resnew").remove();
       }
     }
 
@@ -776,30 +785,22 @@
       }
 
       filterImages(e: JQuery.TriggeredEvent) {
+        const res_notimg = $(q_res)
+          .filter((i, e) => $("img", e).length === 0)
+          .closest("table");
         if (this.toggleButton(e)) {
-          $("div.thre > table > tbody > tr > td.rtd")
-            .filter((i, e) => $("img", e).length === 0)
-            .closest("table")
-            .css("display", "none");
+          res_notimg.hide();
         } else {
-          $("div.thre > table > tbody > tr > td.rtd")
-            .filter((i, e) => $("img", e).length === 0)
-            .closest("table")
-            .css("display", "");
+          res_notimg.show();
         }
       }
 
       filterResNew(e: JQuery.TriggeredEvent) {
+        const res_notnew = $(q_res_notnew).closest("table");
         if (this.toggleButton(e)) {
-          $("div.thre > table > tbody > tr > td.rtd")
-            .filter((i, e) => !$(e).hasClass("resnew"))
-            .closest("table")
-            .css("display", "none");
+          res_notnew.hide();
         } else {
-          $("div.thre > table > tbody > tr > td.rtd")
-            .filter((i, e) => !$(e).hasClass("resnew"))
-            .closest("table")
-            .css("display", "");
+          res_notnew.show();
         }
       }
 
@@ -824,7 +825,7 @@
       onTimer(retry: number, param?: UpdateParam) {
         const cat = loadCatalog();
         const key = this._key;
-        const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
+        const res = $(q_res_resnum);
         const resnew = res.filter((i, e) => {
           const resnum = parseInt(e.textContent ?? "0");
           const res = $(e).parent();
@@ -848,13 +849,13 @@
       }
 
       watch() {
-        $("#contres > a").on("click", (e, param) => {
+        $(q_contres).on("click", (e, param) => {
           setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, 10, param);
         });
       }
 
       update(param?: UpdateParam) {
-        $("#contres > a").trigger("click", param);
+        $(q_contres).trigger("click", param);
       }
     }
 
@@ -865,22 +866,20 @@
 
       constructor(key: string) {
         const cat = loadCatalog();
-        const res = $("div.thre > table > tbody > tr > td.rtd");
+        const res = $(q_res);
         if (cat[key] != null) {
           cat[key].res = res.length;
           cat[key].updateTime = Date.now();
-          cat[key].readres = res.length;
         } else {
           cat[key] = {
             href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
             res: res.length,
-            readres: res.length,
+            readres: 0,
             title: document.title.replace(/ - ..*$/, ""),
             updateTime: Date.now(),
             offset: 0,
           };
         }
-        saveCatalog(cat, "1");
         // render marker
         res.removeClass("resnew");
         if (cat[key].readres >= 0) {
@@ -888,10 +887,13 @@
         } else {
           res.addClass("resnew");
         }
+        // update readres
+        cat[key].readres = res.length;
         // preserve pos
         if (cat[key].offset > 0) {
           window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
         }
+        saveCatalog(cat, "1");
         this.key = key;
         // install components
         this.updater = new Updater(key);
@@ -912,14 +914,14 @@
         $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
         $(window).on("keydown", (e) => this.onHotkey(e));
         $(window).on("unload", () => this.onUnload());
-        $("div.thre").on("mouseover", (e) => this.onPlayVideo(e));
-        $("div.thre").on("mouseout", (e) => this.onCloseVideo(e));
-        $("div.thre").on("click", (e, suppress?) => this.onClick(e, suppress));
+        $(q_thre).on("mouseover", (e) => this.onPlayVideo(e));
+        $(q_thre).on("mouseout", (e) => this.onCloseVideo(e));
+        $(q_thre).on("click", (e, suppress?) => this.onClick(e, suppress));
       }
 
-      seek(resno: number) {
-        const res = $("div.thre > table > tbody > tr > td.rtd");
-        document.body.scrollTo(0, res.eq(resno).offset()?.top ?? 0);
+      seek(resnum: number) {
+        const res = $(q_res);
+        document.body.scrollTo(0, res.eq(resnum).offset()?.top ?? 0);
       }
 
       onClick(e: JQuery.TriggeredEvent, suppress?: boolean) {
@@ -1018,7 +1020,7 @@
       }
     }
 
-    if ($("div.thre").length === 0) {
+    if ($(q_thre).length === 0) {
       return; // thread is dead
     }
     const key = getKey(domain, location.href);
