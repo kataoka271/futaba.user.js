@@ -570,24 +570,9 @@ td.catup .resnum {
 
 `);
         class ImageViewer {
-            constructor(anchors) {
-                this.images = anchors.map((i, anchor) => {
-                    var _a;
-                    const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
-                    if (ext === "mp4" || ext === "webm") {
-                        const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
-                        return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
-                    }
-                    else {
-                        const img = $("<img>").attr("src", anchor.href);
-                        return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
-                    }
-                });
-                this.thumbs = anchors.map((i, anchor) => {
-                    var _a;
-                    const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
-                    return img.get(0);
-                });
+            constructor() {
+                this.images = $();
+                this.thumbs = $();
                 this.index = 0;
             }
             page(i) {
@@ -657,6 +642,25 @@ td.catup .resnum {
                 e.preventDefault();
             }
             show(image) {
+                const anchors = $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
+                this.images = anchors.map((i, anchor) => {
+                    var _a;
+                    const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
+                    if (ext === "mp4" || ext === "webm") {
+                        const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                        return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
+                    }
+                    else {
+                        const img = $("<img>").attr("src", anchor.href);
+                        return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
+                    }
+                });
+                this.thumbs = anchors.map((i, anchor) => {
+                    var _a;
+                    const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                    return img.get(0);
+                });
+                this.index = 0;
                 const viewer = $('<div id="image-view" tabindex="0">')
                     .on("dblclick", (e) => this.onDblClick(e))
                     .on("keydown", (e) => this.onKeyDown(e))
@@ -667,12 +671,16 @@ td.catup .resnum {
                 $("#gallery").css("display", "none");
                 $("body").append(viewer);
                 $("#image-view").trigger("focus");
+                $("#image-view > .image-slider").css("transition", "all 0s 0s ease");
                 this.images.children("a").each((i, e) => {
                     if (e instanceof HTMLAnchorElement && e.href === image.href) {
                         this.index = i;
                         this.page(this.index);
                     }
                 });
+                setTimeout(() => {
+                    $("#image-view > .image-slider").css("transition", "");
+                }, 100);
             }
             destroy() {
                 $("#gallery").css("display", "");
@@ -681,12 +689,14 @@ td.catup .resnum {
             }
         }
         class Gallery {
+            constructor() {
+                this.imageViewer = new ImageViewer();
+            }
             create() {
                 const anchors = $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img:visible").parent();
                 if (anchors.length === 0) {
                     return;
                 }
-                this.imageViewer = new ImageViewer(anchors);
                 $('<div id="gallery" tabindex="0">')
                     .on("dblclick", (e) => this.onDblClick(e))
                     .on("keydown", (e) => this.onKeyDown(e))
@@ -710,14 +720,13 @@ td.catup .resnum {
                 }
             }
             onClick(e) {
-                var _a;
                 if (!(e.target instanceof HTMLImageElement)) {
                     return;
                 }
                 if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
                     return;
                 }
-                (_a = this.imageViewer) === null || _a === void 0 ? void 0 : _a.show(e.target.parentElement);
+                this.imageViewer.show(e.target.parentElement);
                 e.stopPropagation();
                 e.preventDefault();
             }
@@ -753,10 +762,9 @@ td.catup .resnum {
                 }
             }
             destroy() {
-                var _a;
                 $("#gallery-button").removeClass("enable");
                 $("#gallery").remove();
-                (_a = this.imageViewer) === null || _a === void 0 ? void 0 : _a.destroy();
+                this.imageViewer.destroy();
             }
         }
         class TreeView {
@@ -936,17 +944,18 @@ td.catup .resnum {
             }
         }
         class Updater {
-            constructor(cat, key) {
-                this._cat = cat;
+            constructor(key) {
                 this._key = key;
             }
             onTimer(retry, param) {
+                const cat = loadCatalog();
+                const key = this._key;
                 const res = $("div.thre table > tbody > tr > td.rtd > span:first-child");
                 const resnew = res.filter((i, e) => {
                     var _a;
                     const resnum = parseInt((_a = e.textContent) !== null && _a !== void 0 ? _a : "0");
                     const res = $(e).parent();
-                    if (resnum > this._cat[this._key].readres) {
+                    if (resnum > cat[key].readres) {
                         res.addClass("resnew");
                         return true;
                     }
@@ -956,10 +965,10 @@ td.catup .resnum {
                     }
                 });
                 if (resnew.length > 0 && !(param === null || param === void 0 ? void 0 : param.preserve)) {
-                    this._cat[this._key].res = res.length;
-                    this._cat[this._key].readres = res.length;
+                    cat[key].res = res.length;
+                    cat[key].readres = res.length;
                     const newcat = loadCatalog();
-                    newcat[this._key] = this._cat[this._key];
+                    newcat[key] = cat[key];
                     saveCatalog(newcat, "1");
                 }
                 else if (retry > 0) {
@@ -975,102 +984,145 @@ td.catup .resnum {
                 $("#contres > a").trigger("click", param);
             }
         }
-        const onHotkey = (updater, autoScr, e) => {
-            var _a;
-            if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
-                return;
-            }
-            if (e.key === "a" && autoScr.tm / 2 >= 100) {
-                autoScr.tm /= 2;
-                autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-            }
-            else if (e.key === "A" && autoScr.tm * 2 < 180000) {
-                autoScr.tm *= 2;
-                autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-            }
-            else if (e.key === "v" && autoScr.dy * 2 < 10000) {
-                autoScr.dy *= 2;
-                autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-            }
-            else if (e.key === "V" && autoScr.dy / 2 >= 1) {
-                autoScr.dy /= 2;
-                autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
-            }
-            else if (e.key === "S" && autoScr.running) {
-                if (!autoScr.paused) {
-                    autoScr.pause();
-                    autoScr.status("auto-scroll paused", true);
+        class ResMode {
+            constructor(key) {
+                const cat = loadCatalog();
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                if (cat[key] != null) {
+                    cat[key].res = res.length;
+                    cat[key].updateTime = Date.now();
+                    cat[key].readres = res.length;
                 }
                 else {
-                    autoScr.resume();
-                    autoScr.status("auto-scroll started");
+                    cat[key] = {
+                        href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
+                        res: res.length,
+                        readres: res.length,
+                        title: document.title.replace(/ - ..*$/, ""),
+                        updateTime: Date.now(),
+                        offset: 0,
+                    };
+                }
+                saveCatalog(cat, "1");
+                // render marker
+                res.removeClass("resnew");
+                if (cat[key].readres >= 0) {
+                    res.slice(cat[key].readres).addClass("resnew");
+                }
+                else {
+                    res.addClass("resnew");
+                }
+                // preserve pos
+                if (cat[key].offset > 0) {
+                    window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
+                }
+                this.key = key;
+                // install components
+                this.updater = new Updater(key);
+                this.updater.watch();
+                this.autoScr = new AutoScroller();
+                const select = new AutoUpdateSelect(this, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
+                ["15s", 15], ["30s", 30], ["1min", 60]);
+                const gallery = new Gallery();
+                const treeview = new TreeView();
+                const command = new Command(gallery, treeview);
+                $("body").append(this.autoScr.status());
+                $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
+                $(window).on("keydown", (e) => this.onHotkey(e));
+                $(window).on("unload", () => this.onUnload());
+                $("div.thre").on("mouseover", (e) => this.onPlayVideo(e));
+                $("div.thre").on("mouseout", (e) => this.onCloseVideo(e));
+                $("div.thre").on("click", (e, suppress) => this.onClick(e, suppress));
+            }
+            seek(resno) {
+                var _a, _b;
+                const res = $("div.thre > table > tbody > tr > td.rtd");
+                document.body.scrollTo(0, (_b = (_a = res.eq(resno).offset()) === null || _a === void 0 ? void 0 : _a.top) !== null && _b !== void 0 ? _b : 0);
+            }
+            onClick(e, suppress) {
+                if (!suppress && e.target.tagName === "IMG" && e.target.parentElement.tagName === "A") {
+                    const imageViewer = new ImageViewer();
+                    imageViewer.show(e.target.parentElement);
+                    e.preventDefault();
+                    e.stopPropagation();
                 }
             }
-            else if (e.key === "s") {
-                updater.update();
-            }
-        };
-        const initialize = () => {
-            const root = $("div.thre");
-            if (root.length === 0) {
-                return; // thread is dead
-            }
-            const key = getKey(domain, location.href);
-            if (key == null) {
-                return;
-            }
-            const cat = loadCatalog();
-            const res = $("div.thre > table > tbody > tr > td.rtd");
-            if (cat[key] != null) {
-                cat[key].res = res.length;
-                cat[key].updateTime = Date.now();
-            }
-            else {
-                cat[key] = {
-                    href: location.href.replace(/^https?:\/\/\w+\.2chan.net\/b\//, ""),
-                    res: res.length,
-                    readres: 0,
-                    title: document.title.replace(/ - ..*$/, ""),
-                    updateTime: Date.now(),
-                    offset: 0,
-                };
-            }
-            res.removeClass("resnew");
-            if (cat[key].readres >= 0) {
-                res.slice(cat[key].readres).addClass("resnew");
-            }
-            else {
-                res.addClass("resnew");
-            }
-            cat[key].readres = res.length;
-            saveCatalog(cat, "1");
-            if (cat[key].offset > 0) {
-                window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
-            }
-            $(window).on("scroll", () => {
-                cat[key].offset = window.scrollY;
-            });
-            $(window).on("unload", () => {
-                const newcat = loadCatalog();
-                newcat[key] = cat[key];
-                saveCatalog(newcat, "1");
-            });
-            $("div.thre > a > img, div.thre > table > tbody > tr > td.rtd a > img").on("mouseenter", (e) => {
-                const img = $(e.target);
-                const src = img.attr("src");
-                const href = img.parent().attr("href");
-                if (src == null || href == null) {
+            onHotkey(e) {
+                var _a;
+                if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
                     return;
                 }
-                const ext = href.split(".").slice(-1)[0].toLowerCase();
-                if (ext === "mp4" || ext === "webm") {
-                    img.trigger("click");
+                const autoScr = this.autoScr;
+                if (e.key === "a" && this.autoScr.tm / 2 >= 100) {
+                    autoScr.tm /= 2;
+                    autoScr.status(`scroll speed up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
-                else if (ext === "gif") {
-                    img.data("thumb", src).attr("src", href);
+                else if (e.key === "A" && autoScr.tm * 2 < 180000) {
+                    autoScr.tm *= 2;
+                    autoScr.status(`scroll speed down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
                 }
-            });
-            $("div.thre").on("mouseout", (e) => {
+                else if (e.key === "v" && autoScr.dy * 2 < 10000) {
+                    autoScr.dy *= 2;
+                    autoScr.status(`scroll volume up: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "V" && autoScr.dy / 2 >= 1) {
+                    autoScr.dy /= 2;
+                    autoScr.status(`scroll volume down: tm=${autoScr.tm} dy=${autoScr.dy} dy/tm=${(autoScr.dy / autoScr.tm) * 1000}`);
+                }
+                else if (e.key === "S" && autoScr.running) {
+                    if (!autoScr.paused) {
+                        autoScr.pause();
+                        autoScr.status("auto-scroll paused", true);
+                    }
+                    else {
+                        autoScr.resume();
+                        autoScr.status("auto-scroll started");
+                    }
+                }
+                else if (e.key === "s") {
+                    this.updater.update();
+                }
+            }
+            onUnload() {
+                const newcat = loadCatalog();
+                newcat[this.key].offset = scrollY;
+                saveCatalog(newcat, "1");
+            }
+            onUpdate() {
+                this.updater.update({ preserve: true });
+            }
+            onSelect(text, value) {
+                console.log("auto-scroll", text, value);
+                if (text === "OFF") {
+                    this.autoScr.stop();
+                    this.autoScr.status("auto-scroll stopped");
+                }
+                else {
+                    this.autoScr.start();
+                    this.autoScr.status("auto-scroll started");
+                }
+            }
+            onPlayVideo(e) {
+                var _a;
+                if (e.target.tagName === "IMG" && ((_a = e.target.parentElement) === null || _a === void 0 ? void 0 : _a.tagName) === "A") {
+                    const img = $(e.target);
+                    const src = img.attr("src");
+                    const href = img.parent().attr("href");
+                    if (src == null || href == null) {
+                        return;
+                    }
+                    const ext = href.split(".").slice(-1)[0].toLowerCase();
+                    if (ext === "mp4" || ext === "webm") {
+                        img.trigger("click", true);
+                        e.stopPropagation();
+                    }
+                    else if (ext === "gif") {
+                        img.data("thumb", src).attr("src", href);
+                        e.stopPropagation();
+                    }
+                }
+            }
+            onCloseVideo(e) {
                 if (e.target.tagName === "DIV" || e.target.tagName === "TD") {
                     const video = $("video.extendWebm", e.target);
                     if (video.length > 0) {
@@ -1085,33 +1137,16 @@ td.catup .resnum {
                         e.stopPropagation();
                     }
                 }
-            });
-            const updater = new Updater(cat, key);
-            updater.watch();
-            const autoScr = new AutoScroller();
-            const select = new AutoUpdateSelect({
-                onUpdate: () => updater.update({ preserve: true }),
-                onSelect: (text, value) => {
-                    console.log("auto-scroll", text, value);
-                    if (text === "OFF") {
-                        autoScr.stop();
-                        autoScr.status("auto-scroll stopped");
-                    }
-                    else {
-                        autoScr.start();
-                        autoScr.status("auto-scroll started");
-                    }
-                },
-            }, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
-            ["15s", 15], ["30s", 30], ["1min", 60]);
-            const gallery = new Gallery();
-            const treeview = new TreeView();
-            const command = new Command(gallery, treeview);
-            $("body").append(autoScr.status());
-            $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
-            $(window).on("keydown", (e) => onHotkey(updater, autoScr, e));
-        };
-        initialize();
+            }
+        }
+        if ($("div.thre").length === 0) {
+            return; // thread is dead
+        }
+        const key = getKey(domain, location.href);
+        if (key == null) {
+            return;
+        }
+        new ResMode(key);
     };
     const mo = /^https?:\/\/(\w+)\./.exec(location.href);
     const domain = mo == null ? "" : mo[1];
