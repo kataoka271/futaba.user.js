@@ -656,17 +656,17 @@ td.catup .resnum {
                     var _a;
                     const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
                     if (ext === "mp4" || ext === "webm") {
-                        const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                        const img = $('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
                         return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
                     }
                     else {
-                        const img = $("<img>").attr("src", anchor.href);
+                        const img = $('<img loading="lazy">').attr("src", anchor.href);
                         return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
                     }
                 });
                 this.thumbs = anchors.map((i, anchor) => {
                     var _a;
-                    const img = $("<img>").attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                    const img = $('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
                     return img.get(0);
                 });
                 this.index = 0;

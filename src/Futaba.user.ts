@@ -500,15 +500,15 @@
         this.images = anchors.map((i, anchor) => {
           const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
           if (ext === "mp4" || ext === "webm") {
-            const img = $("<img>").attr("src", $("img", anchor).attr("src") ?? anchor.href);
+            const img = $('<img loading="lazy">').attr("src", $("img", anchor).attr("src") ?? anchor.href);
             return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
           } else {
-            const img = $("<img>").attr("src", anchor.href);
+            const img = $('<img loading="lazy">').attr("src", anchor.href);
             return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
           }
         });
         this.thumbs = anchors.map((i, anchor) => {
-          const img = $("<img>").attr("src", $("img", anchor).attr("src") ?? anchor.href);
+          const img = $('<img loading="lazy">').attr("src", $("img", anchor).attr("src") ?? anchor.href);
           return img.get(0);
         });
         this.index = 0;
