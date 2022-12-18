@@ -1,8 +1,14 @@
-.rtd.resnew {
+table.resnew > tbody > tr > td.rtd {
   background-color: #fce0d6;
 }
-.rtd.resnew > .rsc {
+table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
+}
+div.thre.filter-resnew table:not(.resnew) {
+  display: none;
+}
+div.thre.filter-images table:not(.resimg) {
+  display: none;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);

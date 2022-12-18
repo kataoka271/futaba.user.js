@@ -376,11 +376,17 @@ td.catup .resnum {
     };
     const onResMode = (domain) => {
         GM_addStyle(`\
-.rtd.resnew {
+table.resnew > tbody > tr > td.rtd {
   background-color: #fce0d6;
 }
-.rtd.resnew > .rsc {
+table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
+}
+div.thre.filter-resnew table:not(.resnew) {
+  display: none;
+}
+div.thre.filter-images table:not(.resimg) {
+  display: none;
 }
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);
@@ -573,10 +579,10 @@ td.catup .resnum {
         const q_table = "div.thre > table";
         const q_res = "div.thre > table > tbody > tr > td.rtd";
         const q_res_resnum = "div.thre table > tbody > tr > td.rtd > span:first-child"; // support tree view mode
-        const q_res_notnew = "div.thre > table > tbody > tr > td.rtd:not(.resnew)";
-        const q_res_visible_images = "div.thre > table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
+        const q_res_notnew = "div.thre table:not(.resnew)";
+        const q_res_images = "div.thre table > tbody > tr > td.rtd a > img";
+        const q_res_visible_images = "div.thre table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
         const q_maxres = "div.thre > span.maxres"; // tree view recovery point
-        const q_tdrtd = "td.rtd";
         const q_contres = "#contres > a";
         class ImageViewer {
             constructor() {
@@ -777,40 +783,32 @@ td.catup .resnum {
         }
         class TreeView {
             make() {
-                let quoteList = [];
-                $(q_res_notnew).last().closest("table").after($('<span id="resnew">'));
-                $($(q_table).get().reverse()).each((i, table) => {
-                    const td = $(q_tdrtd, table).first();
-                    const text = $("blockquote, a, span", td)
-                        .contents()
-                        .filter((i, e) => {
-                        return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
-                    })
-                        .text();
-                    const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
-                    let tdCloned = null;
-                    quoteList = quoteList.filter((item) => {
-                        if (!text.includes(item.quot)) {
+                let quotes = [];
+                $(q_res_notnew).last().after($('<span id="resnew">'));
+                $(q_table)
+                    .toArray()
+                    .reverse()
+                    .forEach((table) => {
+                    const mo = />([^>]+)$/.exec($("blockquote > font", table).last().text());
+                    const text = $("blockquote, a, span", table).text();
+                    let clone = null;
+                    quotes = quotes.filter((item) => {
+                        if (!text.includes(item.text)) {
                             return true;
                         }
+                        if (!table.classList.contains("resnew") && item.resnew) {
+                            if (clone == null) {
+                                clone = $(table).clone(true).insertAfter("#resnew").addClass("clone");
+                            }
+                            $("blockquote", clone).first().after(item.res);
+                        }
                         else {
-                            if (!td.hasClass("resnew") && item.resnew) {
-                                if (tdCloned == null) {
-                                    tdCloned = $(q_tdrtd, $(table).clone(true).insertAfter("#resnew").addClass("cloned")).first();
-                                }
-                                tdCloned.children("blockquote").first().after(item.elem);
-                            }
-                            else {
-                                td.children("blockquote").first().after(item.elem);
-                            }
-                            return false;
+                            $("blockquote", table).first().after(item.res);
                         }
+                        return false;
                     });
-                    if (quote.length > 0) {
-                        const mo = />([^>]+)$/.exec(quote.text());
-                        if (mo != null) {
-                            quoteList.push({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
-                        }
+                    if (mo != null) {
+                        quotes.push({ text: mo[1], res: table, resnew: table.classList.contains("resnew") });
                     }
                 });
             }
@@ -820,7 +818,7 @@ td.catup .resnum {
                     const span = $(e);
                     const resnum = parseInt(span.text() || "0");
                     const table = span.closest("table");
-                    if (table.hasClass("cloned") || array[resnum] != null) {
+                    if (table.hasClass("clone") || array[resnum] != null) {
                         table.remove();
                     }
                     else {
@@ -915,23 +913,19 @@ td.catup .resnum {
                 }
             }
             filterImages(e) {
-                const res_notimg = $(q_res)
-                    .filter((i, e) => $("img", e).length === 0)
-                    .closest("table");
                 if (this.toggleButton(e)) {
-                    res_notimg.hide();
+                    $(q_thre).addClass("filter-images");
                 }
                 else {
-                    res_notimg.show();
+                    $(q_thre).removeClass("filter-images");
                 }
             }
             filterResNew(e) {
-                const res_notnew = $(q_res_notnew).closest("table");
                 if (this.toggleButton(e)) {
-                    res_notnew.hide();
+                    $(q_thre).addClass("filter-resnew");
                 }
                 else {
-                    res_notnew.show();
+                    $(q_thre).removeClass("filter-resnew");
                 }
             }
             toggleTreeView(e) {
@@ -954,7 +948,7 @@ td.catup .resnum {
                 const resnew = res.filter((i, e) => {
                     var _a;
                     const resnum = parseInt((_a = e.textContent) !== null && _a !== void 0 ? _a : "0");
-                    const res = $(e).parent();
+                    const res = $(e).closest("table");
                     if (resnum > cat[key].readres) {
                         res.addClass("resnew");
                         return true;
@@ -987,7 +981,7 @@ td.catup .resnum {
         class ResMode {
             constructor(key) {
                 const cat = loadCatalog();
-                const res = $(q_res);
+                const res = $(q_res).closest("table");
                 if (cat[key] != null) {
                     cat[key].res = res.length;
                     cat[key].updateTime = Date.now();
@@ -1010,6 +1004,7 @@ td.catup .resnum {
                 else {
                     res.addClass("resnew");
                 }
+                $(q_res_images).closest("table").addClass("resimg");
                 // update readres
                 cat[key].readres = res.length;
                 // preserve pos

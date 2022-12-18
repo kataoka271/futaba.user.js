@@ -412,10 +412,10 @@
     const q_table = "div.thre > table";
     const q_res = "div.thre > table > tbody > tr > td.rtd";
     const q_res_resnum = "div.thre table > tbody > tr > td.rtd > span:first-child"; // support tree view mode
-    const q_res_notnew = "div.thre > table > tbody > tr > td.rtd:not(.resnew)";
-    const q_res_visible_images = "div.thre > table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
+    const q_res_notnew = "div.thre table:not(.resnew)";
+    const q_res_images = "div.thre table > tbody > tr > td.rtd a > img";
+    const q_res_visible_images = "div.thre table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
     const q_maxres = "div.thre > span.maxres"; // tree view recovery point
-    const q_tdrtd = "td.rtd";
     const q_contres = "#contres > a";
 
     class ImageViewer {
@@ -627,40 +627,33 @@
 
     class TreeView {
       make() {
-        let quoteList: { quot: string; elem: HTMLElement; resnew: boolean }[] = [];
-        $(q_res_notnew).last().closest("table").after($('<span id="resnew">'));
-        $($(q_table).get().reverse()).each((i, table) => {
-          const td = $(q_tdrtd, table).first();
-          const text = $("blockquote, a, span", td)
-            .contents()
-            .filter((i, e) => {
-              return e.nodeType === Node.TEXT_NODE && e instanceof Text && e.data !== "";
-            })
-            .text();
-          const quote = $("blockquote > font", td).last(); // should get quote before nodes are added
-          let tdCloned: JQuery<HTMLElement> | null = null;
-          quoteList = quoteList.filter((item) => {
-            if (!text.includes(item.quot)) {
-              return true;
-            } else {
-              if (!td.hasClass("resnew") && item.resnew) {
-                if (tdCloned == null) {
-                  tdCloned = $(q_tdrtd, $(table).clone(true).insertAfter("#resnew").addClass("cloned")).first();
+        let quotes: { text: string; res: HTMLElement; resnew: boolean }[] = [];
+        $(q_res_notnew).last().after($('<span id="resnew">'));
+        $(q_table)
+          .toArray()
+          .reverse()
+          .forEach((table) => {
+            const mo = />([^>]+)$/.exec($("blockquote > font", table).last().text());
+            const text = $("blockquote, a, span", table).text();
+            let clone: JQuery<HTMLElement> | null = null;
+            quotes = quotes.filter((item) => {
+              if (!text.includes(item.text)) {
+                return true;
+              }
+              if (!table.classList.contains("resnew") && item.resnew) {
+                if (clone == null) {
+                  clone = $(table).clone(true).insertAfter("#resnew").addClass("clone");
                 }
-                tdCloned.children("blockquote").first().after(item.elem);
+                $("blockquote", clone).first().after(item.res);
               } else {
-                td.children("blockquote").first().after(item.elem);
+                $("blockquote", table).first().after(item.res);
               }
               return false;
+            });
+            if (mo != null) {
+              quotes.push({ text: mo[1], res: table, resnew: table.classList.contains("resnew") });
             }
           });
-          if (quote.length > 0) {
-            const mo = />([^>]+)$/.exec(quote.text());
-            if (mo != null) {
-              quoteList.push({ quot: mo[1], elem: table, resnew: td.hasClass("resnew") }); // remove ">" appeared at the first of quote string
-            }
-          }
-        });
       }
 
       flat() {
@@ -669,7 +662,7 @@
           const span = $(e);
           const resnum = parseInt(span.text() || "0");
           const table = span.closest("table");
-          if (table.hasClass("cloned") || array[resnum] != null) {
+          if (table.hasClass("clone") || array[resnum] != null) {
             table.remove();
           } else {
             array[resnum] = table;
@@ -785,22 +778,18 @@
       }
 
       filterImages(e: JQuery.TriggeredEvent) {
-        const res_notimg = $(q_res)
-          .filter((i, e) => $("img", e).length === 0)
-          .closest("table");
         if (this.toggleButton(e)) {
-          res_notimg.hide();
+          $(q_thre).addClass("filter-images");
         } else {
-          res_notimg.show();
+          $(q_thre).removeClass("filter-images");
         }
       }
 
       filterResNew(e: JQuery.TriggeredEvent) {
-        const res_notnew = $(q_res_notnew).closest("table");
         if (this.toggleButton(e)) {
-          res_notnew.hide();
+          $(q_thre).addClass("filter-resnew");
         } else {
-          res_notnew.show();
+          $(q_thre).removeClass("filter-resnew");
         }
       }
 
@@ -828,7 +817,7 @@
         const res = $(q_res_resnum);
         const resnew = res.filter((i, e) => {
           const resnum = parseInt(e.textContent ?? "0");
-          const res = $(e).parent();
+          const res = $(e).closest("table");
           if (resnum > cat[key].readres) {
             res.addClass("resnew");
             return true;
@@ -866,7 +855,7 @@
 
       constructor(key: string) {
         const cat = loadCatalog();
-        const res = $(q_res);
+        const res = $(q_res).closest("table");
         if (cat[key] != null) {
           cat[key].res = res.length;
           cat[key].updateTime = Date.now();
@@ -887,6 +876,7 @@
         } else {
           res.addClass("resnew");
         }
+        $(q_res_images).closest("table").addClass("resimg");
         // update readres
         cat[key].readres = res.length;
         // preserve pos
