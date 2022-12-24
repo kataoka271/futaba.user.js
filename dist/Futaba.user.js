@@ -12,6 +12,7 @@
 // @grant        GM_addStyle
 // @grant        GM_registerMenuCommand
 // @grant        GM_deleteValue
+// @grant        GM_download
 // ==/UserScript==
 (function () {
     const getKey = (domain, href) => {
@@ -637,6 +638,23 @@ body.filter-images div.thre table:not(.resimg) {
                 }
                 else if (e.key === "Escape") {
                     this.destroy();
+                }
+                else if (e.key === "s") {
+                    const url = this.images.filter(":visible").eq(this.index).find("a").attr("href");
+                    if (url == null) {
+                        return;
+                    }
+                    const name = url.split("/").pop();
+                    if (name == null) {
+                        return;
+                    }
+                    GM_download({
+                        url: url,
+                        name: name,
+                        headers: { Referer: location.href },
+                        saveAs: false,
+                        onerror: (e) => console.log(e),
+                    });
                 }
                 else {
                     return;
