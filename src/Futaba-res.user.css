@@ -4,10 +4,11 @@ table.resnew > tbody > tr > td.rtd {
 table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
 }
-div.thre.filter-resnew table:not(.resnew) {
-  display: none;
-}
-div.thre.filter-images table:not(.resimg) {
+body.filter-resnew div.thre table:not(.resnew),
+body.filter-resnew #gallery > div:not(.resnew),
+body.filter-resnew #image-view > .image-slider > div:not(.resnew),
+body.filter-resnew #image-view > .image-thumbs > img:not(.resnew),
+body.filter-images div.thre table:not(.resimg) {
   display: none;
 }
 #auto-scroll-status {

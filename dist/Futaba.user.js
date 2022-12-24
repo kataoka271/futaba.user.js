@@ -382,10 +382,11 @@ table.resnew > tbody > tr > td.rtd {
 table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
 }
-div.thre.filter-resnew table:not(.resnew) {
-  display: none;
-}
-div.thre.filter-images table:not(.resimg) {
+body.filter-resnew div.thre table:not(.resnew),
+body.filter-resnew #gallery > div:not(.resnew),
+body.filter-resnew #image-view > .image-slider > div:not(.resnew),
+body.filter-resnew #image-view > .image-thumbs > img:not(.resnew),
+body.filter-images div.thre table:not(.resimg) {
   display: none;
 }
 #auto-scroll-status {
@@ -581,7 +582,7 @@ div.thre.filter-images table:not(.resimg) {
         const q_res_resnum = "div.thre table > tbody > tr > td.rtd > span:first-child"; // support tree view mode
         const q_res_notnew = "div.thre table:not(.resnew)";
         const q_res_images = "div.thre table > tbody > tr > td.rtd a > img";
-        const q_res_visible_images = "div.thre table > tbody > tr > td.rtd a > img:visible, div.thre > a > img";
+        const q_images = "div.thre table > tbody > tr > td.rtd a > img, div.thre > a > img";
         const q_maxres = "div.thre > span.maxres"; // tree view recovery point
         const q_contres = "#contres > a";
         class ImageViewer {
@@ -591,36 +592,36 @@ div.thre.filter-images table:not(.resimg) {
                 this.index = 0;
             }
             page(i) {
-                if (0 <= i && i < this.images.length) {
-                    $("#image-view > .image-slider > div > div > video").next().trigger("click");
-                    $(`#image-view > .image-slider > div:nth-child(${i + 1}).movie > a > img`).trigger("click");
-                    $("#image-view > .image-slider").css("transform", `translate(-${100 * i}%)`);
-                    $("#image-view > .image-number").text(`${i + 1}/${this.images.length}`);
-                    const offset = 50 * i - (window.innerWidth - 50) / 2;
-                    if (offset < 0) {
-                        $("#image-view > .image-thumbs").css("transform", "translate(0)");
-                    }
-                    else {
-                        $("#image-view > .image-thumbs").css("transform", `translate(-${offset}px)`);
-                    }
-                    this.thumbs.removeClass("active");
-                    this.thumbs.eq(i).addClass("active");
+                const visible_images = this.images.filter(":visible");
+                if (i >= visible_images.length) {
+                    i = visible_images.length - 1;
+                }
+                else if (i < 0) {
+                    i = 0;
+                }
+                $("#image-view > .image-slider > div > div > video").next().trigger("click");
+                $("#image-view > .image-slider").css("transform", `translate(-${100 * i}%)`);
+                const image = visible_images.eq(i);
+                if (image.is(".movie")) {
+                    image.find("a > img").trigger("click");
+                }
+                $("#image-view > .image-number").text(`${i + 1}/${visible_images.length}`);
+                const offset = 50 * i - (window.innerWidth - 50) / 2;
+                if (offset < 0) {
+                    $("#image-view > .image-thumbs").css("transform", "translate(0)");
                 }
                 else {
-                    console.error("illegal page number", i);
+                    $("#image-view > .image-thumbs").css("transform", `translate(-${offset}px)`);
                 }
+                this.thumbs.removeClass("active");
+                this.thumbs.filter(":visible").eq(i).addClass("active");
+                this.index = i;
             }
             next() {
-                if (this.index < this.images.length - 1) {
-                    this.index++;
-                    this.page(this.index);
-                }
+                this.page(this.index + 1);
             }
             prev() {
-                if (0 < this.index) {
-                    this.index--;
-                    this.page(this.index);
-                }
+                this.page(this.index - 1);
             }
             onDblClick(e) {
                 this.destroy();
@@ -657,22 +658,30 @@ div.thre.filter-images table:not(.resimg) {
                 e.preventDefault();
             }
             show(image) {
-                const anchors = $(q_res_visible_images).parent();
+                const anchors = $(q_images).parent();
                 this.images = anchors.map((i, anchor) => {
-                    var _a;
+                    var _a, _b;
                     const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
+                    let div;
                     if (ext === "mp4" || ext === "webm") {
                         const img = $('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
-                        return $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img)).get(0);
+                        div = $('<div class="movie">').append($("<a>").attr("href", anchor.href).append(img));
                     }
                     else {
                         const img = $('<img loading="lazy">').attr("src", anchor.href);
-                        return $("<div>").append($("<a>").attr("href", anchor.href).append(img)).get(0);
+                        div = $("<div>").append($("<a>").attr("href", anchor.href).append(img));
                     }
+                    if ((_b = anchor.closest("table")) === null || _b === void 0 ? void 0 : _b.classList.contains("resnew")) {
+                        div.addClass("resnew");
+                    }
+                    return div.data("index", i).get(0);
                 });
                 this.thumbs = anchors.map((i, anchor) => {
-                    var _a;
+                    var _a, _b;
                     const img = $('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                    if ((_b = anchor.closest("table")) === null || _b === void 0 ? void 0 : _b.classList.contains("resnew")) {
+                        img.addClass("resnew");
+                    }
                     return img.get(0);
                 });
                 this.index = 0;
@@ -707,7 +716,7 @@ div.thre.filter-images table:not(.resimg) {
                 this.imageViewer = new ImageViewer();
             }
             create() {
-                const anchors = $(q_res_visible_images).parent();
+                const anchors = $(q_images).parent();
                 if (anchors.length === 0) {
                     return;
                 }
@@ -763,17 +772,23 @@ div.thre.filter-images table:not(.resimg) {
                 }
             }
             make(anchor) {
+                var _a;
                 const a = $(anchor);
                 const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
+                let div;
                 if (ext === "mp4" || ext === "webm") {
-                    return $("<div>").addClass("movie").append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
+                    div = $('<div class="movie">').append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
                 }
                 else if (ext === "gif") {
-                    return $("<div>").addClass("anime").append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
+                    div = $('<div class="anime">').append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
                 }
                 else {
-                    return $("<div>").append(a.clone(), this.quote(a)).get(0);
+                    div = $("<div>").append(a.clone(), this.quote(a)).get(0);
                 }
+                if ((_a = anchor.closest("table")) === null || _a === void 0 ? void 0 : _a.classList.contains("resnew")) {
+                    div.classList.add("resnew");
+                }
+                return div;
             }
             destroy() {
                 $("#gallery-button").removeClass("enable");
@@ -914,18 +929,18 @@ div.thre.filter-images table:not(.resimg) {
             }
             filterImages(e) {
                 if (this.toggleButton(e)) {
-                    $(q_thre).addClass("filter-images");
+                    $("body").addClass("filter-images");
                 }
                 else {
-                    $(q_thre).removeClass("filter-images");
+                    $("body").removeClass("filter-images");
                 }
             }
             filterResNew(e) {
                 if (this.toggleButton(e)) {
-                    $(q_thre).addClass("filter-resnew");
+                    $("body").addClass("filter-resnew");
                 }
                 else {
-                    $(q_thre).removeClass("filter-resnew");
+                    $("body").removeClass("filter-resnew");
                 }
             }
             toggleTreeView(e) {
