@@ -714,7 +714,7 @@ body.filter-images div.thre table:not(.resimg) {
                 $("body").append(viewer);
                 $("#image-view").trigger("focus");
                 $("#image-view > .image-slider").css("transition", "all 0s 0s ease");
-                this.images.children("a").each((i, e) => {
+                this.images.filter(":visible").children("a").each((i, e) => {
                     if (e instanceof HTMLAnchorElement && e.href === image.href) {
                         this.index = i;
                         this.page(this.index);
