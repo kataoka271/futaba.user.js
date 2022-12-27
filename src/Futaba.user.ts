@@ -266,12 +266,11 @@
         elems.each((i, e) => {
           if (this._item_count === 0) {
             this._table.show();
-          }
-          this._item_count += 1;
-          if (this._item_count % this._column_count === 0) {
+          } else if (this._item_count % this._column_count === 0) {
             this._tr = $("<tr>").appendTo(this._tbody);
           }
           this._tr.append($(e).clone(true));
+          this._item_count += 1;
         });
       }
 
