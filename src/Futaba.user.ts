@@ -119,6 +119,10 @@
 @@include("Futaba-cat.user.css")
 `);
 
+    const q_cattable = "table#cattable";
+    const q_cattable_cells = "table#cattable td";
+    const q_cattable_firstrow = "table#cattable tr:first-child td";
+
     function normalizeText(text: string): string {
       // prettier-ignore
       const kanaMap: { [name: string]: string } = {
@@ -148,7 +152,7 @@
 
     const findItemsText = (text: string): JQuery<HTMLElement> => {
       const text2 = normalizeText(text);
-      return $("table#cattable td").filter((i, e) => {
+      return $(q_cattable_cells).filter((i, e) => {
         if (!e.textContent) {
           return false;
         }
@@ -157,7 +161,7 @@
     };
 
     const findItemsHist = (cat: Catalog): JQuery<HTMLElement> => {
-      return $("table#cattable td").filter((i, e) => {
+      return $(q_cattable_cells).filter((i, e) => {
         const href = $("a", e).attr("href");
         if (href != null) {
           const key = getKey(domain, href);
@@ -319,7 +323,7 @@
       update() {
         this._oldcat = loadCatalog();
         this._cat = filterNotExpiredItems(this._oldcat);
-        $("table#cattable td").each((i, elem) => {
+        $(q_cattable_cells).each((i, elem) => {
           updateCat(this._cat, elem, this._oldcat);
         });
         this._result.hide();
@@ -340,7 +344,7 @@
       }
 
       reload(save?: boolean) {
-        $("table#cattable").load(location.href + " #cattable > tbody", () => {
+        $(q_cattable).load(location.href + " #cattable > tbody", () => {
           if (save == null || save) {
             this.save();
           }
@@ -349,58 +353,74 @@
       }
     }
 
-    const initialize = () => {
-      const finder = $('<input type="search" placeholder="Search...">')
-        .css("vertical-align", "middle")
-        .on("focus", (e) => {
-          if (e.target instanceof HTMLInputElement) {
-            e.target.select();
-          }
-        });
-      const button = $('<input type="button" value="更新">').on("click", () => {
-        table.reload();
-      });
-      const column_count = $("table#cattable tr:first-child td").length;
-      const result = new FindResult(column_count);
-      const table = new CatTable(finder, result);
-      const select = new AutoUpdateSelect(
-        {
-          onUpdate: () => table.reload(false),
-          onSelect: () => ({}),
-        },
-        ["OFF", 0],
-        ["30sec", 30],
-        ["1min", 60],
-        ["3min", 180]
-      );
+    class CatMode {
+      table: CatTable;
+      finder: JQuery<HTMLElement>;
 
-      $("table#cattable").before($("<p>"), $('<div id="controller">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
+      constructor() {
+        const finder = $('<input type="search" placeholder="Search...">')
+          .css("vertical-align", "middle")
+          .on("focus", (e) => this.onFocus(e));
+        const button = $('<input type="button" value="更新">').on("click", () => this.onButtonClick());
+        const column_count = $(q_cattable_firstrow).length;
+        const result = new FindResult(column_count);
+        const table = new CatTable(finder, result);
+        const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+        const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
 
-      table.update();
+        $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
 
-      $(window).on("unload", () => {
-        table.save();
-      });
+        table.update();
 
-      $(window).on("keydown", (e) => {
+        setInterval(() => this.onTimer(), 2000);
+        $(window).on("keydown", (e) => this.onKeyDown(e));
+        $(window).on("unload", () => this.onUnload());
+
+        this.table = table;
+        this.finder = finder;
+      }
+
+      onFocus(e: JQuery.TriggeredEvent) {
+        if (e.target instanceof HTMLInputElement) {
+          e.target.select();
+        }
+      }
+
+      onUpdate() {
+        this.table.reload();
+      }
+
+      onSelect() {
+        return;
+      }
+
+      onButtonClick() {
+        this.table.reload();
+      }
+
+      onUnload() {
+        this.table.save();
+      }
+
+      onKeyDown(e: JQuery.TriggeredEvent) {
         if (document.activeElement?.tagName === "INPUT") {
           return;
         }
         if (e.key === "s") {
-          table.reload();
+          this.table.reload();
         } else if (e.key === "/") {
-          finder.trigger("focus");
+          this.finder.trigger("focus");
         }
-      });
+      }
 
-      setInterval(() => {
+      onTimer() {
         if (readClearUpdateFlag() === "1") {
-          table.update();
+          this.table.update();
         }
-      }, 2000);
-    };
+      }
+    }
 
-    initialize();
+    new CatMode();
   };
 
   const onResMode = (domain: string) => {
@@ -462,7 +482,7 @@
         this.page(this.index - 1);
       }
 
-      onDblClick(e: JQuery.TriggeredEvent) {
+      onClose(e: JQuery.TriggeredEvent) {
         this.destroy();
         e.stopPropagation();
         e.preventDefault();
@@ -537,7 +557,7 @@
         });
         this.index = 0;
         const viewer = $('<div id="image-view" tabindex="0">')
-          .on("dblclick", (e) => this.onDblClick(e))
+          .on("contextmenu", (e) => this.onClose(e))
           .on("keydown", (e) => this.onKeyDown(e))
           .on("wheel", (e) => this.onWheel(e))
           .append($('<div class="image-slider">').append(this.images))
@@ -577,7 +597,7 @@
           return;
         }
         $('<div id="gallery" tabindex="0">')
-          .on("dblclick", (e) => this.onDblClick(e))
+          .on("contextmenu", (e) => this.onClose(e))
           .on("keydown", (e) => this.onKeyDown(e))
           .on("click", (e) => this.onClick(e))
           .append(anchors.map((i, e) => this.make(e)))
@@ -585,7 +605,7 @@
           .trigger("focus");
       }
 
-      onDblClick(e: JQuery.TriggeredEvent) {
+      onClose(e: JQuery.TriggeredEvent) {
         if (e.target.tagName === "DIV") {
           this.destroy();
           e.stopPropagation();

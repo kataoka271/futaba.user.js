@@ -121,6 +121,9 @@ td.catup .resnum {
 }
 
 `);
+        const q_cattable = "table#cattable";
+        const q_cattable_cells = "table#cattable td";
+        const q_cattable_firstrow = "table#cattable tr:first-child td";
         function normalizeText(text) {
             // prettier-ignore
             const kanaMap = {
@@ -149,7 +152,7 @@ td.catup .resnum {
         }
         const findItemsText = (text) => {
             const text2 = normalizeText(text);
-            return $("table#cattable td").filter((i, e) => {
+            return $(q_cattable_cells).filter((i, e) => {
                 if (!e.textContent) {
                     return false;
                 }
@@ -157,7 +160,7 @@ td.catup .resnum {
             });
         };
         const findItemsHist = (cat) => {
-            return $("table#cattable td").filter((i, e) => {
+            return $(q_cattable_cells).filter((i, e) => {
                 var _a, _b;
                 const href = $("a", e).attr("href");
                 if (href != null) {
@@ -304,7 +307,7 @@ td.catup .resnum {
             update() {
                 this._oldcat = loadCatalog();
                 this._cat = filterNotExpiredItems(this._oldcat);
-                $("table#cattable td").each((i, elem) => {
+                $(q_cattable_cells).each((i, elem) => {
                     updateCat(this._cat, elem, this._oldcat);
                 });
                 this._result.hide();
@@ -324,7 +327,7 @@ td.catup .resnum {
                 saveCatalog(this._cat);
             }
             reload(save) {
-                $("table#cattable").load(location.href + " #cattable > tbody", () => {
+                $(q_cattable).load(location.href + " #cattable > tbody", () => {
                     if (save == null || save) {
                         this.save();
                     }
@@ -332,48 +335,61 @@ td.catup .resnum {
                 });
             }
         }
-        const initialize = () => {
-            const finder = $('<input type="search" placeholder="Search...">')
-                .css("vertical-align", "middle")
-                .on("focus", (e) => {
+        class CatMode {
+            constructor() {
+                const finder = $('<input type="search" placeholder="Search...">')
+                    .css("vertical-align", "middle")
+                    .on("focus", (e) => this.onFocus(e));
+                const button = $('<input type="button" value="更新">').on("click", () => this.onButtonClick());
+                const column_count = $(q_cattable_firstrow).length;
+                const result = new FindResult(column_count);
+                const table = new CatTable(finder, result);
+                const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+                const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
+                $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
+                table.update();
+                setInterval(() => this.onTimer(), 2000);
+                $(window).on("keydown", (e) => this.onKeyDown(e));
+                $(window).on("unload", () => this.onUnload());
+                this.table = table;
+                this.finder = finder;
+            }
+            onFocus(e) {
                 if (e.target instanceof HTMLInputElement) {
                     e.target.select();
                 }
-            });
-            const button = $('<input type="button" value="更新">').on("click", () => {
-                table.reload();
-            });
-            const column_count = $("table#cattable tr:first-child td").length;
-            const result = new FindResult(column_count);
-            const table = new CatTable(finder, result);
-            const select = new AutoUpdateSelect({
-                onUpdate: () => table.reload(false),
-                onSelect: () => ({}),
-            }, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-            $("table#cattable").before($("<p>"), $('<div id="controller">').append(finder, " ", button, " ", select.get()), $("<p>"), result.get(), $("<p>"));
-            table.update();
-            $(window).on("unload", () => {
-                table.save();
-            });
-            $(window).on("keydown", (e) => {
+            }
+            onUpdate() {
+                this.table.reload();
+            }
+            onSelect() {
+                return;
+            }
+            onButtonClick() {
+                this.table.reload();
+            }
+            onUnload() {
+                this.table.save();
+            }
+            onKeyDown(e) {
                 var _a;
                 if (((_a = document.activeElement) === null || _a === void 0 ? void 0 : _a.tagName) === "INPUT") {
                     return;
                 }
                 if (e.key === "s") {
-                    table.reload();
+                    this.table.reload();
                 }
                 else if (e.key === "/") {
-                    finder.trigger("focus");
+                    this.finder.trigger("focus");
                 }
-            });
-            setInterval(() => {
+            }
+            onTimer() {
                 if (readClearUpdateFlag() === "1") {
-                    table.update();
+                    this.table.update();
                 }
-            }, 2000);
-        };
-        initialize();
+            }
+        }
+        new CatMode();
     };
     const onResMode = (domain) => {
         GM_addStyle(`\
@@ -624,7 +640,7 @@ body.filter-images div.thre table:not(.resimg) {
             prev() {
                 this.page(this.index - 1);
             }
-            onDblClick(e) {
+            onClose(e) {
                 this.destroy();
                 e.stopPropagation();
                 e.preventDefault();
@@ -704,7 +720,7 @@ body.filter-images div.thre table:not(.resimg) {
                 });
                 this.index = 0;
                 const viewer = $('<div id="image-view" tabindex="0">')
-                    .on("dblclick", (e) => this.onDblClick(e))
+                    .on("contextmenu", (e) => this.onClose(e))
                     .on("keydown", (e) => this.onKeyDown(e))
                     .on("wheel", (e) => this.onWheel(e))
                     .append($('<div class="image-slider">').append(this.images))
@@ -739,14 +755,14 @@ body.filter-images div.thre table:not(.resimg) {
                     return;
                 }
                 $('<div id="gallery" tabindex="0">')
-                    .on("dblclick", (e) => this.onDblClick(e))
+                    .on("contextmenu", (e) => this.onClose(e))
                     .on("keydown", (e) => this.onKeyDown(e))
                     .on("click", (e) => this.onClick(e))
                     .append(anchors.map((i, e) => this.make(e)))
                     .appendTo("body")
                     .trigger("focus");
             }
-            onDblClick(e) {
+            onClose(e) {
                 if (e.target.tagName === "DIV") {
                     this.destroy();
                     e.stopPropagation();
