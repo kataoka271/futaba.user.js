@@ -763,11 +763,9 @@ body.filter-images div.thre table:not(.resimg) {
                     .trigger("focus");
             }
             onClose(e) {
-                if (e.target.tagName === "DIV") {
-                    this.destroy();
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
+                this.destroy();
+                e.stopPropagation();
+                e.preventDefault();
             }
             onKeyDown(e) {
                 if (e.key === "Escape" || e.key === "Esc") {

@@ -606,11 +606,9 @@
       }
 
       onClose(e: JQuery.TriggeredEvent) {
-        if (e.target.tagName === "DIV") {
-          this.destroy();
-          e.stopPropagation();
-          e.preventDefault();
-        }
+        this.destroy();
+        e.stopPropagation();
+        e.preventDefault();
       }
 
       onKeyDown(e: JQuery.TriggeredEvent) {
