@@ -68,8 +68,8 @@
       this._select.on("input", () => this.onInput());
     }
 
-    get(): HTMLElement {
-      return this._select.get(0);
+    get(): JQuery<HTMLElement> {
+      return this._select;
     }
 
     addOption(name: string, value: number) {
@@ -600,7 +600,7 @@
           .on("contextmenu", (e) => this.onClose(e))
           .on("keydown", (e) => this.onKeyDown(e))
           .on("click", (e) => this.onClick(e))
-          .append(anchors.map((i, e) => this.make(e)))
+          .append(anchors.map((i, e) => this.make(e).get()))
           .appendTo("body")
           .trigger("focus");
       }
@@ -648,19 +648,19 @@
         }
       }
 
-      make(anchor: HTMLAnchorElement): HTMLElement {
+      make(anchor: HTMLAnchorElement): JQuery<HTMLElement> {
         const a = $(anchor);
         const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
         let div;
         if (ext === "mp4" || ext === "webm") {
-          div = $('<div class="movie">').append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
+          div = $('<div class="movie">').append(a.clone().attr("data-ext", ext), this.quote(a));
         } else if (ext === "gif") {
-          div = $('<div class="anime">').append(a.clone().attr("data-ext", ext), this.quote(a)).get(0);
+          div = $('<div class="anime">').append(a.clone().attr("data-ext", ext), this.quote(a));
         } else {
-          div = $("<div>").append(a.clone(), this.quote(a)).get(0);
+          div = $("<div>").append(a.clone(), this.quote(a));
         }
-        if (anchor.closest("table")?.classList.contains("resnew")) {
-          div.classList.add("resnew");
+        if (a.closest("table")?.is(".resnew")) {
+          div.addClass("resnew");
         }
         return div;
       }
