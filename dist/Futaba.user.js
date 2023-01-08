@@ -159,7 +159,7 @@ td.catup .resnum {
                 return normalizeText(e.textContent).includes(text2);
             });
         };
-        const findItemsHist = (cat) => {
+        const findItemsHist = (cat, domain) => {
             return $(q_cattable_cells).filter((i, e) => {
                 var _a, _b;
                 const href = $("a", e).attr("href");
@@ -172,7 +172,7 @@ td.catup .resnum {
                 return false;
             });
         };
-        const updateCat = (cat, td, oldcat) => {
+        const updateCat = (cat, td, oldcat, domain) => {
             const a = $("a", td);
             const href = a.attr("href");
             if (href == null) {
@@ -293,7 +293,7 @@ td.catup .resnum {
             }
         }
         class CatTable {
-            constructor(finder, result) {
+            constructor(finder, result, domain) {
                 this._finder = finder;
                 this._result = result;
                 this._cat = {};
@@ -303,12 +303,13 @@ td.catup .resnum {
                     clearTimeout(timer);
                     timer = setTimeout(() => this.update(), 500);
                 });
+                this._domain = domain;
             }
             update() {
                 this._oldcat = loadCatalog();
                 this._cat = filterNotExpiredItems(this._oldcat);
                 $(q_cattable_cells).each((i, elem) => {
-                    updateCat(this._cat, elem, this._oldcat);
+                    updateCat(this._cat, elem, this._oldcat, this._domain);
                 });
                 this._result.hide();
                 this._result.clear();
@@ -317,7 +318,7 @@ td.catup .resnum {
                     this._result.append(findItemsText(value));
                 }
                 else {
-                    this._result.append(findItemsHist(this._cat));
+                    this._result.append(findItemsHist(this._cat, this._domain));
                 }
                 if (this._result.count() > 0) {
                     this._result.show();
@@ -336,14 +337,14 @@ td.catup .resnum {
             }
         }
         class CatMode {
-            constructor() {
+            constructor(domain) {
                 const finder = $('<input type="search" placeholder="Search...">')
                     .css("vertical-align", "middle")
                     .on("focus", (e) => this.onFocus(e));
                 const button = $('<input type="button" value="更新">').on("click", () => this.onButtonClick());
                 const column_count = $(q_cattable_firstrow).length;
                 const result = new FindResult(column_count);
-                const table = new CatTable(finder, result);
+                const table = new CatTable(finder, result, domain);
                 const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
                 const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
                 $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
@@ -389,7 +390,7 @@ td.catup .resnum {
                 }
             }
         }
-        new CatMode();
+        new CatMode(domain);
     };
     const onResMode = (domain) => {
         GM_addStyle(`\
@@ -730,7 +731,10 @@ body.filter-images div.thre table:not(.resimg) {
                 $("body").append(viewer);
                 $("#image-view").trigger("focus");
                 $("#image-view > .image-slider").css("transition", "all 0s 0s ease");
-                this.images.filter(":visible").children("a").each((i, e) => {
+                this.images
+                    .filter(":visible")
+                    .children("a")
+                    .each((i, e) => {
                     if (e instanceof HTMLAnchorElement && e.href === image.href) {
                         this.index = i;
                         this.page(this.index);
@@ -1191,12 +1195,15 @@ body.filter-images div.thre table:not(.resimg) {
         }
         new ResMode(key);
     };
-    const mo = /^https?:\/\/(\w+)\./.exec(location.href);
-    const domain = mo == null ? "" : mo[1];
-    if (/futaba\.php\?mode=cat/.test(location.href)) {
-        onCatMode(domain);
+    function main() {
+        const mo = /^https?:\/\/(\w+)\./.exec(location.href);
+        const domain = mo == null ? "" : mo[1];
+        if (/futaba\.php\?mode=cat/.test(location.href)) {
+            onCatMode(domain);
+        }
+        else {
+            onResMode(domain);
+        }
     }
-    else {
-        onResMode(domain);
-    }
+    main();
 })();

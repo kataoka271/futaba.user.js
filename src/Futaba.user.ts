@@ -160,7 +160,7 @@
       });
     };
 
-    const findItemsHist = (cat: Catalog): JQuery<HTMLElement> => {
+    const findItemsHist = (cat: Catalog, domain: string): JQuery<HTMLElement> => {
       return $(q_cattable_cells).filter((i, e) => {
         const href = $("a", e).attr("href");
         if (href != null) {
@@ -173,7 +173,7 @@
       });
     };
 
-    const updateCat = (cat: Catalog, td: HTMLElement, oldcat: Catalog) => {
+    const updateCat = (cat: Catalog, td: HTMLElement, oldcat: Catalog, domain: string) => {
       const a = $("a", td);
       const href = a.attr("href");
       if (href == null) {
@@ -307,8 +307,9 @@
       _result: FindResult;
       _cat: Catalog;
       _oldcat: Catalog;
+      _domain: string;
 
-      constructor(finder: JQuery<HTMLElement>, result: FindResult) {
+      constructor(finder: JQuery<HTMLElement>, result: FindResult, domain: string) {
         this._finder = finder;
         this._result = result;
         this._cat = {};
@@ -318,13 +319,14 @@
           clearTimeout(timer);
           timer = setTimeout(() => this.update(), 500);
         });
+        this._domain = domain;
       }
 
       update() {
         this._oldcat = loadCatalog();
         this._cat = filterNotExpiredItems(this._oldcat);
         $(q_cattable_cells).each((i, elem) => {
-          updateCat(this._cat, elem, this._oldcat);
+          updateCat(this._cat, elem, this._oldcat, this._domain);
         });
         this._result.hide();
         this._result.clear();
@@ -332,7 +334,7 @@
         if (typeof value === "string" && value !== "") {
           this._result.append(findItemsText(value));
         } else {
-          this._result.append(findItemsHist(this._cat));
+          this._result.append(findItemsHist(this._cat, this._domain));
         }
         if (this._result.count() > 0) {
           this._result.show();
@@ -357,14 +359,14 @@
       table: CatTable;
       finder: JQuery<HTMLElement>;
 
-      constructor() {
+      constructor(domain: string) {
         const finder = $('<input type="search" placeholder="Search...">')
           .css("vertical-align", "middle")
           .on("focus", (e) => this.onFocus(e));
         const button = $('<input type="button" value="更新">').on("click", () => this.onButtonClick());
         const column_count = $(q_cattable_firstrow).length;
         const result = new FindResult(column_count);
-        const table = new CatTable(finder, result);
+        const table = new CatTable(finder, result, domain);
         const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
         const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
 
@@ -420,7 +422,7 @@
       }
     }
 
-    new CatMode();
+    new CatMode(domain);
   };
 
   const onResMode = (domain: string) => {
@@ -567,12 +569,15 @@
         $("body").append(viewer);
         $("#image-view").trigger("focus");
         $("#image-view > .image-slider").css("transition", "all 0s 0s ease");
-        this.images.filter(":visible").children("a").each((i, e) => {
-          if (e instanceof HTMLAnchorElement && e.href === image.href) {
-            this.index = i;
-            this.page(this.index);
-          }
-        });
+        this.images
+          .filter(":visible")
+          .children("a")
+          .each((i, e) => {
+            if (e instanceof HTMLAnchorElement && e.href === image.href) {
+              this.index = i;
+              this.page(this.index);
+            }
+          });
         setTimeout(() => {
           $("#image-view > .image-slider").css("transition", "");
         }, 100);
@@ -1067,12 +1072,16 @@
     new ResMode(key);
   };
 
-  const mo = /^https?:\/\/(\w+)\./.exec(location.href);
-  const domain: string = mo == null ? "" : mo[1];
+  function main() {
+    const mo = /^https?:\/\/(\w+)\./.exec(location.href);
+    const domain: string = mo == null ? "" : mo[1];
 
-  if (/futaba\.php\?mode=cat/.test(location.href)) {
-    onCatMode(domain);
-  } else {
-    onResMode(domain);
+    if (/futaba\.php\?mode=cat/.test(location.href)) {
+      onCatMode(domain);
+    } else {
+      onResMode(domain);
+    }
   }
+
+  main();
 })();
