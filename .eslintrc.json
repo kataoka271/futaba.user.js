@@ -16,5 +16,6 @@
         "semi": ["error", "always"],
         "eqeqeq": ["error", "always", {"null": "never"}],
         "quotes": ["error", "double", {"avoidEscape": true}]
-    }
+    },
+    "ignorePatterns": ["gulpfile.js"]
 }
