@@ -1,10 +1,9 @@
 {
   "name": "userscripts",
   "version": "1.0.0",
-  "description": "This is a test repository.",
-  "main": "B9DM.user.js",
+  "description": "Userscripts for Tampermonkey",
+  "private": true,
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "build": "npx gulp",
     "watch": "npx gulp watch"
   },
@@ -13,7 +12,7 @@
     "url": "git+https://github.com/kataoka271/userscripts.git"
   },
   "keywords": [],
-  "author": "",
+  "author": "k_hir@hotmail.com",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/kataoka271/userscripts/issues"
