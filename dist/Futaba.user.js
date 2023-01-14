@@ -82,6 +82,12 @@
     }
     const onCatMode = (domain) => {
         GM_addStyle(`\
+body > a.select, body > b > a.select {
+  font-weight: bold;
+}
+body > b {
+  font-weight: normal;
+}
 #cattable, #findresult {
   display: flex;
   flex-direction: row;
@@ -141,7 +147,17 @@
         console.log("cat-mode is running:", domain);
         const q_cattable = "#cattable";
         const q_cattable_cells = "#cattable div.cell";
-        const url_request = location.href + " #cattable > tbody";
+        function urlRequest(option) {
+            if (option == null) {
+                return location.protocol + "//" + location.host + location.pathname + location.search + " #cattable > tbody";
+            }
+            else if (option === 0) {
+                return location.protocol + "//" + location.host + location.pathname + "?mode=cat #cattable > tbody";
+            }
+            else {
+                return location.protocol + "//" + location.host + location.pathname + `?mode=cat&sort=${option}` + " #cattable > tbody";
+            }
+        }
         function normalizeText(text) {
             // prettier-ignore
             const kanaMap = {
@@ -357,7 +373,9 @@
         }
         class CatMode {
             constructor(domain) {
+                this.sortOption = {};
                 this.transform();
+                this.overrideCatalogLinks();
                 const finder = $('<input type="search" placeholder="Search...">')
                     .css("vertical-align", "middle")
                     .on("focus", (e) => this.onFocus(e));
@@ -379,8 +397,39 @@
                     .append($('<div class="inner-cell">').append($(e).contents()))
                     .get())));
             }
-            reload(save) {
-                $(q_cattable).load(url_request, () => {
+            overrideCatalogLinks() {
+                $("body > a, body > b > a")
+                    .filter((i, a) => /\?mode=cat/.test(a.href))
+                    .each((i, a) => {
+                    if (a.href === location.href) {
+                        a.classList.add("select");
+                    }
+                    const mo = /\?mode=cat&sort=(\d+)/.exec(a.href);
+                    if (mo == null) {
+                        $(a).on("click", (e) => {
+                            $("body > a, body > b > a").removeClass("select");
+                            e.target.classList.add("select");
+                            e.stopPropagation();
+                            e.preventDefault();
+                            this.reload({ save: false, sort: 0 });
+                        });
+                    }
+                    else {
+                        $(a).on("click", (e) => {
+                            $("body > a, body > b > a").removeClass("select");
+                            e.target.classList.add("select");
+                            e.stopPropagation();
+                            e.preventDefault();
+                            this.reload({ save: false, sort: parseInt(mo[1]) });
+                        });
+                    }
+                });
+            }
+            reload({ save, sort } = {}) {
+                if (sort != null) {
+                    this.sortOption = { value: sort };
+                }
+                $(q_cattable).load(urlRequest(this.sortOption.value), () => {
                     if (save == null || save) {
                         this.table.save();
                     }
@@ -394,7 +443,7 @@
                 }
             }
             onUpdate() {
-                this.reload();
+                this.reload({ save: false });
             }
             onSelect() {
                 return;

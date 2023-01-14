@@ -1,3 +1,9 @@
+body > a.select, body > b > a.select {
+  font-weight: bold;
+}
+body > b {
+  font-weight: normal;
+}
 #cattable, #findresult {
   display: flex;
   flex-direction: row;

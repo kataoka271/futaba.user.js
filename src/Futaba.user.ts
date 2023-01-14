@@ -122,7 +122,16 @@
 
     const q_cattable = "#cattable";
     const q_cattable_cells = "#cattable div.cell";
-    const url_request = location.href + " #cattable > tbody";
+
+    function urlRequest(option?: number): string {
+      if (option == null) {
+        return location.protocol + "//" + location.host + location.pathname + location.search + " #cattable > tbody";
+      } else if (option === 0) {
+        return location.protocol + "//" + location.host + location.pathname + "?mode=cat #cattable > tbody";
+      } else {
+        return location.protocol + "//" + location.host + location.pathname + `?mode=cat&sort=${option}` + " #cattable > tbody";
+      }
+    }
 
     function normalizeText(text: string): string {
       // prettier-ignore
@@ -365,9 +374,11 @@
     class CatMode {
       table: CatTable;
       finder: JQuery<HTMLElement>;
+      sortOption: { value?: number } = {};
 
       constructor(domain: string) {
         this.transform();
+        this.overrideCatalogLinks();
 
         const finder = $('<input type="search" placeholder="Search...">')
           .css("vertical-align", "middle")
@@ -402,8 +413,39 @@
         );
       }
 
-      reload(save?: boolean): void {
-        $(q_cattable).load(url_request, () => {
+      overrideCatalogLinks(): void {
+        $<HTMLAnchorElement>("body > a, body > b > a")
+          .filter((i, a) => /\?mode=cat/.test(a.href))
+          .each((i, a) => {
+            if (a.href === location.href) {
+              a.classList.add("select");
+            }
+            const mo = /\?mode=cat&sort=(\d+)/.exec(a.href);
+            if (mo == null) {
+              $(a).on("click", (e) => {
+                $("body > a, body > b > a").removeClass("select");
+                e.target.classList.add("select");
+                e.stopPropagation();
+                e.preventDefault();
+                this.reload({ save: false, sort: 0 });
+              });
+            } else {
+              $(a).on("click", (e) => {
+                $("body > a, body > b > a").removeClass("select");
+                e.target.classList.add("select");
+                e.stopPropagation();
+                e.preventDefault();
+                this.reload({ save: false, sort: parseInt(mo[1]) });
+              });
+            }
+          });
+      }
+
+      reload({ save, sort }: { save?: boolean; sort?: number } = {}): void {
+        if (sort != null) {
+          this.sortOption = { value: sort };
+        }
+        $(q_cattable).load(urlRequest(this.sortOption.value), () => {
           if (save == null || save) {
             this.table.save();
           }
@@ -419,7 +461,7 @@
       }
 
       onUpdate(): void {
-        this.reload();
+        this.reload({ save: false });
       }
 
       onSelect(): void {
