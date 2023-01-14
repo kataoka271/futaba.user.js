@@ -82,29 +82,49 @@
     }
     const onCatMode = (domain) => {
         GM_addStyle(`\
+#cattable, #findresult {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+}
+#cattable > div.cell, #findresult > div.cell {
+  border: 1px solid #800000;
+  margin: 1px;
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 65px;
+}
 .resnum {
   margin-left: 2px;
   font-size: 70%;
 }
-td.resup .resnum {
+.resup .resnum {
   color: #f02020;
 }
-td.resup {
+.resup {
   background-color: #fce0d6;
 }
-td.resdown .resnum {
+.resdown .resnum {
   color: #2020f0;
 }
-td.resdown {
+.resdown {
   background-color: #cccccc;
 }
-td.reseq {
+.reseq {
   background-color: #cccccc;
 }
-td.thrnew {
+.thrnew {
   background-color: #fce0d6;
 }
-td.catup .resnum {
+.catup .resnum {
   color: #f02020;
 }
 #controller {
@@ -119,9 +139,9 @@ td.catup .resnum {
 
 `);
         console.log("cat-mode is running:", domain);
-        const q_cattable = "table#cattable";
-        const q_cattable_cells = "table#cattable td";
-        const q_cattable_firstrow = "table#cattable tr:first-child td";
+        const q_cattable = "#cattable";
+        const q_cattable_cells = "#cattable div.cell";
+        const url_request = location.href + " #cattable > tbody";
         function normalizeText(text) {
             // prettier-ignore
             const kanaMap = {
@@ -267,29 +287,22 @@ td.catup .resnum {
             }
         }
         class FindResult {
-            constructor(column_count = 8) {
-                this._table = $('<table border="1" align="center">').hide();
-                this._tbody = $("<tbody>").appendTo(this._table);
-                this._tr = $("<tr>").appendTo(this._tbody);
+            constructor() {
+                this._table = $('<div id="findresult">').hide();
                 this._item_count = 0;
-                this._column_count = column_count;
             }
             append(elems) {
                 elems.each((i, e) => {
-                    if (this._item_count === 0) {
+                    if (i === 0) {
                         this._table.show();
                     }
-                    else if (this._item_count % this._column_count === 0) {
-                        this._tr = $("<tr>").appendTo(this._tbody);
-                    }
-                    this._tr.append($(e).clone(true));
+                    this._table.append($(e).clone(true));
                     this._item_count += 1;
                 });
             }
             clear() {
                 this._table.hide();
-                this._tbody.empty();
-                this._tr = $("<tr>").appendTo(this._tbody);
+                this._table.empty();
                 this._item_count = 0;
             }
             get() {
@@ -312,11 +325,7 @@ td.catup .resnum {
                 this._cat = new CatView({});
                 this._oldcat = new CatView({});
                 this.update();
-                let timer;
-                this._finder.on("input", () => {
-                    clearTimeout(timer);
-                    timer = setTimeout(() => this.update(), 500);
-                });
+                this._finder.on("input", this.onInput);
                 this._domain = domain;
             }
             update() {
@@ -341,23 +350,19 @@ td.catup .resnum {
             save() {
                 this._cat.save();
             }
-            reload(save) {
-                $(q_cattable).load(location.href + " #cattable > tbody", () => {
-                    if (save == null || save) {
-                        this.save();
-                    }
-                    this.update();
-                });
+            onInput() {
+                clearTimeout(this._timer);
+                this._timer = setTimeout(() => this.update(), 500);
             }
         }
         class CatMode {
             constructor(domain) {
+                this.transform();
                 const finder = $('<input type="search" placeholder="Search...">')
                     .css("vertical-align", "middle")
                     .on("focus", (e) => this.onFocus(e));
                 const button = $('<input type="button" value="更新">').on("click", () => this.onButtonClick());
-                const column_count = $(q_cattable_firstrow).length;
-                const result = new FindResult(column_count);
+                const result = new FindResult();
                 const table = new CatTable(finder, result, domain);
                 const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
                 const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
@@ -369,19 +374,33 @@ td.catup .resnum {
                 this.table = table;
                 this.finder = finder;
             }
+            transform() {
+                $("#cattable").replaceWith($('<div id="cattable">').append($("#cattable td").map((i, e) => $('<div class="cell">')
+                    .append($('<div class="inner-cell">').append($(e).contents()))
+                    .get())));
+            }
+            reload(save) {
+                $(q_cattable).load(url_request, () => {
+                    if (save == null || save) {
+                        this.table.save();
+                    }
+                    this.transform();
+                    this.table.update();
+                });
+            }
             onFocus(e) {
                 if (e.target instanceof HTMLInputElement) {
                     e.target.select();
                 }
             }
             onUpdate() {
-                this.table.reload();
+                this.reload();
             }
             onSelect() {
                 return;
             }
             onButtonClick() {
-                this.table.reload();
+                this.reload();
             }
             onUnload() {
                 this.table.save();
@@ -392,7 +411,7 @@ td.catup .resnum {
                     return;
                 }
                 if (e.key === "s") {
-                    this.table.reload();
+                    this.reload();
                 }
                 else if (e.key === "/") {
                     this.finder.trigger("focus");

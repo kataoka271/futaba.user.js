@@ -1,26 +1,46 @@
+#cattable, #findresult {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: center;
+}
+#cattable > div.cell, #findresult > div.cell {
+  border: 1px solid #800000;
+  margin: 1px;
+  display: flex;
+  position: relative;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: flex-start;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 65px;
+}
 .resnum {
   margin-left: 2px;
   font-size: 70%;
 }
-td.resup .resnum {
+.resup .resnum {
   color: #f02020;
 }
-td.resup {
+.resup {
   background-color: #fce0d6;
 }
-td.resdown .resnum {
+.resdown .resnum {
   color: #2020f0;
 }
-td.resdown {
+.resdown {
   background-color: #cccccc;
 }
-td.reseq {
+.reseq {
   background-color: #cccccc;
 }
-td.thrnew {
+.thrnew {
   background-color: #fce0d6;
 }
-td.catup .resnum {
+.catup .resnum {
   color: #f02020;
 }
 #controller {
