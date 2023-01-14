@@ -691,21 +691,7 @@ body.filter-images div.thre table:not(.resimg) {
                     this.destroy();
                 }
                 else if (e.key === "s") {
-                    const url = this.images.filter(":visible").eq(this.index).find("a").attr("href");
-                    if (url == null) {
-                        return;
-                    }
-                    const name = url.split("/").pop();
-                    if (name == null) {
-                        return;
-                    }
-                    GM_download({
-                        url: url,
-                        name: name,
-                        headers: { Referer: location.href },
-                        saveAs: false,
-                        onerror: (e) => console.log(e),
-                    });
+                    this.save();
                 }
                 else {
                     return;
@@ -777,6 +763,23 @@ body.filter-images div.thre table:not(.resimg) {
                 setTimeout(() => {
                     $("#image-view > .image-slider").css("transition", "");
                 }, 100);
+            }
+            save() {
+                const url = this.images.filter(":visible").eq(this.index).find("a").attr("href");
+                if (url == null) {
+                    return;
+                }
+                const name = url.split("/").pop();
+                if (name == null) {
+                    return;
+                }
+                GM_download({
+                    url: url,
+                    name: name,
+                    headers: { Referer: location.href },
+                    saveAs: false,
+                    onerror: (e) => console.log(e),
+                });
             }
             destroy() {
                 $("#gallery").show().trigger("focus");
