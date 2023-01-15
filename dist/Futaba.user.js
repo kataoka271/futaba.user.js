@@ -341,7 +341,7 @@ body > b {
                 this._cat = new CatView({});
                 this._oldcat = new CatView({});
                 this.update();
-                this._finder.on("input", this.onInput);
+                this._finder.on("input", () => this.onInput());
                 this._domain = domain;
             }
             update() {
