@@ -1,11 +1,12 @@
-const { dest, watch } = require("gulp");
+const { dest, watch, src, series } = require("gulp");
 const ts = require("gulp-typescript");
 const fileinclude = require("gulp-file-include");
 const lec = require("gulp-line-ending-corrector");
+const sass = require("gulp-sass")(require("node-sass"));
 
 const tsProject = ts.createProject("tsconfig.json");
 
-function build() {
+function build_ts() {
   return tsProject
     .src()
     .pipe(fileinclude())
@@ -14,8 +15,14 @@ function build() {
     .pipe(dest("dist"));
 }
 
-exports.default = build;
+function build_sass() {
+  return src("src/**/*.scss")
+    .pipe(sass({ outputStyle: "expanded" }))
+    .pipe(dest("dist/css"));
+}
+
+exports.default = series(build_sass, build_ts);
 
 exports.watch = function () {
-  watch(["src/**/*.ts", "src/**/*.css"], build);
+  watch(["src/**/*.ts", "src/**/*.css", "src/**/*.scss"], exports.default);
 };
