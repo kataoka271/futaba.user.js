@@ -937,19 +937,18 @@
 
     class Updater {
       _key: string;
+      _resMode?: ResMode;
 
       constructor(key: string) {
         this._key = key;
       }
 
-      onTimer(retry: number, param?: UpdateParam): void {
-        const cat = loadCatalog();
-        const key = this._key;
+      onTimer(item: CatalogItem, retry: number, param?: UpdateParam): void {
         const res = $(q_res_resnum);
         const resnew = res.filter((i, e) => {
           const resnum = parseInt(e.textContent ?? "0");
           const res = $(e).closest("table");
-          if (resnum > cat[key].readres) {
+          if (resnum > item.readres) {
             res.addClass("resnew");
             return true;
           } else {
@@ -958,20 +957,29 @@
           }
         });
         if (resnew.length > 0 && !param?.preserve) {
-          cat[key].res = res.length;
-          cat[key].readres = res.length;
+          item.res = res.length;
+          item.readres = res.length;
+          if (this._resMode != null) {
+            item.offset = this._resMode.getResNumFromScrollPosition();
+          }
           const newcat = loadCatalog();
-          newcat[key] = cat[key];
+          newcat[this._key] = item;
           saveCatalog(newcat, "1");
         } else if (retry > 0) {
-          setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, retry - 1, param);
+          setTimeout(this.onTimer.bind(this), 100, item, retry - 1, param);
         }
       }
 
-      watch(): void {
+      watch(resMode?: ResMode): void {
         $(q_contres).on("click", (e, param) => {
-          setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, 10, param);
+          const cat = loadCatalog();
+          const item = cat[this._key];
+          if (this._resMode != null) {
+            this._resMode.insertReadMarker(this._resMode.getResNumFromScrollPosition());
+          }
+          setTimeout(this.onTimer.bind(this), 100, item, 10, param);
         });
+        this._resMode = resMode;
       }
 
       update(param?: UpdateParam): void {
@@ -1011,14 +1019,16 @@
         // update readres
         cat[key].readres = res.length;
         // preserve pos
-        if (cat[key].offset > 0) {
-          window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
+        const offset = cat[key].offset;
+        if (offset > 0) {
+          this.setScrollPositionFromResNum(offset);
+          this.insertReadMarker(offset);
         }
         saveCatalog(cat, "1");
         this.key = key;
         // install components
         this.updater = new Updater(key);
-        this.updater.watch();
+        this.updater.watch(this);
         this.autoScr = new AutoScroller();
         const select = new AutoUpdateSelection(
           this,
@@ -1040,9 +1050,32 @@
         $(q_thre).on("click", (e, suppress?) => this.onClick(e, suppress));
       }
 
-      seek(resnum: number): void {
-        const res = $(q_res);
-        document.body.scrollTo(0, res.eq(resnum).offset()?.top ?? 0);
+      setScrollPositionFromResNum(resnum: number): void {
+        const offset = $(q_table).eq(resnum - 1).offset();
+        if (offset == null) {
+          return;
+        }
+        window.scroll(0, offset.top);
+      }
+
+      getResNumFromScrollPosition(): number {
+        return Math.max.apply(null, $(q_table).map((i, e) => {
+          const res = $(e);
+          const offset = res.offset();
+          const height = res.height();
+          if (offset != null && height != null && offset.top + height <= window.scrollY + window.innerHeight) {
+            return parseInt($("span:first-child", e).eq(0).text());
+          }
+        }).get());
+      }
+
+      insertReadMarker(resnum: number): void {
+        $("#readmarker").remove();
+        if (resnum <= 0) {
+          return;
+        }
+        // marker is not set when resnum equals to or over the last (i.e. resnum >= $(q_table).length)
+        $(q_table).eq(resnum).before('<div id="readmarker"><span>ここまで読んだ</span> <hr> <span>ここまで読んだ</span></div>');
       }
 
       onClick(e: JQuery.TriggeredEvent, suppress?: boolean): void {
@@ -1086,7 +1119,7 @@
 
       onUnload(): void {
         const newcat = loadCatalog();
-        newcat[this.key].offset = scrollY;
+        newcat[this.key].offset = this.getResNumFromScrollPosition();
         saveCatalog(newcat, "1");
       }
 

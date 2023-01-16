@@ -734,6 +734,19 @@ body.filter-images div.thre table:not(.resnew) {
   padding: 0.5em;
 }
 
+#readmarker > span {
+  vertical-align: middle;
+  font-size: small;
+  font-style: italic;
+}
+
+#readmarker > hr {
+  display: inline-block;
+  vertical-align: middle;
+  width: 50%;
+  border: 1px dashed #960000;
+}
+
 `);
         console.log("res-mode is running:", domain);
         const q_thre = "div.thre";
@@ -1136,15 +1149,13 @@ body.filter-images div.thre table:not(.resnew) {
             constructor(key) {
                 this._key = key;
             }
-            onTimer(retry, param) {
-                const cat = loadCatalog();
-                const key = this._key;
+            onTimer(item, retry, param) {
                 const res = $(q_res_resnum);
                 const resnew = res.filter((i, e) => {
                     var _a;
                     const resnum = parseInt((_a = e.textContent) !== null && _a !== void 0 ? _a : "0");
                     const res = $(e).closest("table");
-                    if (resnum > cat[key].readres) {
+                    if (resnum > item.readres) {
                         res.addClass("resnew");
                         return true;
                     }
@@ -1154,20 +1165,29 @@ body.filter-images div.thre table:not(.resnew) {
                     }
                 });
                 if (resnew.length > 0 && !(param === null || param === void 0 ? void 0 : param.preserve)) {
-                    cat[key].res = res.length;
-                    cat[key].readres = res.length;
+                    item.res = res.length;
+                    item.readres = res.length;
+                    if (this._resMode != null) {
+                        item.offset = this._resMode.getResNumFromScrollPosition();
+                    }
                     const newcat = loadCatalog();
-                    newcat[key] = cat[key];
+                    newcat[this._key] = item;
                     saveCatalog(newcat, "1");
                 }
                 else if (retry > 0) {
-                    setTimeout((retry, param) => this.onTimer(retry, param), 100, retry - 1, param);
+                    setTimeout(this.onTimer.bind(this), 100, item, retry - 1, param);
                 }
             }
-            watch() {
+            watch(resMode) {
                 $(q_contres).on("click", (e, param) => {
-                    setTimeout((retry, param) => this.onTimer(retry, param), 100, 10, param);
+                    const cat = loadCatalog();
+                    const item = cat[this._key];
+                    if (this._resMode != null) {
+                        this._resMode.insertReadMarker(this._resMode.getResNumFromScrollPosition());
+                    }
+                    setTimeout(this.onTimer.bind(this), 100, item, 10, param);
                 });
+                this._resMode = resMode;
             }
             update(param) {
                 $(q_contres).trigger("click", param);
@@ -1203,14 +1223,16 @@ body.filter-images div.thre table:not(.resnew) {
                 // update readres
                 cat[key].readres = res.length;
                 // preserve pos
-                if (cat[key].offset > 0) {
-                    window.scrollTo(0, cat[key].offset + window.innerHeight * 0.8);
+                const offset = cat[key].offset;
+                if (offset > 0) {
+                    this.setScrollPositionFromResNum(offset);
+                    this.insertReadMarker(offset);
                 }
                 saveCatalog(cat, "1");
                 this.key = key;
                 // install components
                 this.updater = new Updater(key);
-                this.updater.watch();
+                this.updater.watch(this);
                 this.autoScr = new AutoScroller();
                 const select = new AutoUpdateSelection(this, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
                 ["15s", 15], ["30s", 30], ["1min", 60]);
@@ -1225,10 +1247,30 @@ body.filter-images div.thre table:not(.resnew) {
                 $(q_thre).on("mouseout", (e) => this.onCloseVideo(e));
                 $(q_thre).on("click", (e, suppress) => this.onClick(e, suppress));
             }
-            seek(resnum) {
-                var _a, _b;
-                const res = $(q_res);
-                document.body.scrollTo(0, (_b = (_a = res.eq(resnum).offset()) === null || _a === void 0 ? void 0 : _a.top) !== null && _b !== void 0 ? _b : 0);
+            setScrollPositionFromResNum(resnum) {
+                const offset = $(q_table).eq(resnum - 1).offset();
+                if (offset == null) {
+                    return;
+                }
+                window.scroll(0, offset.top);
+            }
+            getResNumFromScrollPosition() {
+                return Math.max.apply(null, $(q_table).map((i, e) => {
+                    const res = $(e);
+                    const offset = res.offset();
+                    const height = res.height();
+                    if (offset != null && height != null && offset.top + height <= window.scrollY + window.innerHeight) {
+                        return parseInt($("span:first-child", e).eq(0).text());
+                    }
+                }).get());
+            }
+            insertReadMarker(resnum) {
+                $("#readmarker").remove();
+                if (resnum <= 0) {
+                    return;
+                }
+                // marker is not set when resnum equals to or over the last (i.e. resnum >= $(q_table).length)
+                $(q_table).eq(resnum).before('<div id="readmarker"><span>ここまで読んだ</span> <hr> <span>ここまで読んだ</span></div>');
             }
             onClick(e, suppress) {
                 if (!suppress && e.target.tagName === "IMG" && e.target.parentElement.tagName === "A") {
@@ -1276,7 +1318,7 @@ body.filter-images div.thre table:not(.resnew) {
             }
             onUnload() {
                 const newcat = loadCatalog();
-                newcat[this.key].offset = scrollY;
+                newcat[this.key].offset = this.getResNumFromScrollPosition();
                 saveCatalog(newcat, "1");
             }
             onUpdate() {

@@ -226,3 +226,17 @@ body.filter-images {
     padding: 0.5em;
   }
 }
+#readmarker {
+  > span {
+    vertical-align: middle;
+    font-size: small;
+    font-style: italic;
+  }
+
+  > hr {
+    display: inline-block;
+    vertical-align: middle;
+    width: 50%;
+    border: 1px dashed rgb(150, 0, 0);
+  }
+}
