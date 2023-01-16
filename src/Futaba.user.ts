@@ -935,7 +935,7 @@
       preserve: boolean;
     }
 
-    class Updater {
+    class ReloadWatcher {
       _key: string;
       _resMode?: ResMode;
 
@@ -970,7 +970,7 @@
         }
       }
 
-      watch(resMode?: ResMode): void {
+      start(resMode?: ResMode): void {
         $(q_contres).on("click", (e, param) => {
           const cat = loadCatalog();
           const item = cat[this._key];
@@ -982,14 +982,14 @@
         this._resMode = resMode;
       }
 
-      update(param?: UpdateParam): void {
+      trigger(param?: UpdateParam): void {
         $(q_contres).trigger("click", param);
       }
     }
 
     class ResMode {
       key: string;
-      updater: Updater;
+      watcher: ReloadWatcher;
       autoScr: AutoScroller;
 
       constructor(key: string) {
@@ -1027,8 +1027,8 @@
         saveCatalog(cat, "1");
         this.key = key;
         // install components
-        this.updater = new Updater(key);
-        this.updater.watch(this);
+        this.watcher = new ReloadWatcher(key);
+        this.watcher.start(this);
         this.autoScr = new AutoScroller();
         const select = new AutoUpdateSelection(
           this,
@@ -1113,7 +1113,7 @@
             autoScr.status("auto-scroll started");
           }
         } else if (e.key === "s") {
-          this.updater.update();
+          this.watcher.trigger();
         }
       }
 
@@ -1124,7 +1124,7 @@
       }
 
       onUpdate(): void {
-        this.updater.update({ preserve: true });
+        this.watcher.trigger({ preserve: true });
       }
 
       onSelect(text: string, value: number): void {

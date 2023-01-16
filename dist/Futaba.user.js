@@ -1145,7 +1145,7 @@ body.filter-images div.thre table:not(.resnew) {
                 }
             }
         }
-        class Updater {
+        class ReloadWatcher {
             constructor(key) {
                 this._key = key;
             }
@@ -1178,7 +1178,7 @@ body.filter-images div.thre table:not(.resnew) {
                     setTimeout(this.onTimer.bind(this), 100, item, retry - 1, param);
                 }
             }
-            watch(resMode) {
+            start(resMode) {
                 $(q_contres).on("click", (e, param) => {
                     const cat = loadCatalog();
                     const item = cat[this._key];
@@ -1189,7 +1189,7 @@ body.filter-images div.thre table:not(.resnew) {
                 });
                 this._resMode = resMode;
             }
-            update(param) {
+            trigger(param) {
                 $(q_contres).trigger("click", param);
             }
         }
@@ -1231,8 +1231,8 @@ body.filter-images div.thre table:not(.resnew) {
                 saveCatalog(cat, "1");
                 this.key = key;
                 // install components
-                this.updater = new Updater(key);
-                this.updater.watch(this);
+                this.watcher = new ReloadWatcher(key);
+                this.watcher.start(this);
                 this.autoScr = new AutoScroller();
                 const select = new AutoUpdateSelection(this, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
                 ["15s", 15], ["30s", 30], ["1min", 60]);
@@ -1313,7 +1313,7 @@ body.filter-images div.thre table:not(.resnew) {
                     }
                 }
                 else if (e.key === "s") {
-                    this.updater.update();
+                    this.watcher.trigger();
                 }
             }
             onUnload() {
@@ -1322,7 +1322,7 @@ body.filter-images div.thre table:not(.resnew) {
                 saveCatalog(newcat, "1");
             }
             onUpdate() {
-                this.updater.update({ preserve: true });
+                this.watcher.trigger({ preserve: true });
             }
             onSelect(text, value) {
                 console.log("auto-scroll", text, value);
