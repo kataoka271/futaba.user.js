@@ -961,6 +961,7 @@
           item.readres = res.length;
           if (this._resMode != null) {
             item.offset = this._resMode.getResNumFromScrollPosition();
+            this._resMode.insertReadMarker(item.offset);
           }
           const newcat = loadCatalog();
           newcat[this._key] = item;
@@ -1079,7 +1080,15 @@
       }
 
       onClick(e: JQuery.TriggeredEvent, suppress?: boolean): void {
-        if (!suppress && e.target.tagName === "IMG" && e.target.parentElement.tagName === "A") {
+        if (suppress) {
+          return;
+        }
+        if (e.target.tagName === "A" && e.target.firstChild.tagName === "IMG") {
+          const imageViewer = new ImageViewer();
+          imageViewer.show(e.target);
+          e.preventDefault();
+          e.stopPropagation();
+        } else if (e.target.tagName === "IMG" && e.target.parentElement.tagName === "A") {
           const imageViewer = new ImageViewer();
           imageViewer.show(e.target.parentElement);
           e.preventDefault();
