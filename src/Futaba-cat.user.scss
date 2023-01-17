@@ -13,6 +13,7 @@ body {
   flex-wrap: wrap;
   align-items: stretch;
   justify-content: center;
+  margin: auto;
 
   > div.cell {
     border: 1px solid #800000;
@@ -58,8 +59,14 @@ body {
   text-align: center;
   > * {
     vertical-align: middle;
+    box-sizing: border-box;
+    height: 24px;
   }
   > input[type="search"] {
     font-size: small;
+  }
+  > input[type="number"] {
+    font-size: small;
+    width: 60px;
   }
 }

@@ -371,6 +371,30 @@
       }
     }
 
+    function createColumnAdjust(): JQuery<HTMLElement> {
+      $("#cattable, #findresult").width("100%");
+      return $('<input id="column-adjust" type="number" value="100" step="10" max="100" min="0">')
+        .on("input", function () {
+          if (!(this instanceof HTMLInputElement)) {
+            return;
+          }
+          return $("#cattable, #findresult").width(`${this.value}%`);
+        })
+        .on("wheel", function (e: JQuery.TriggeredEvent) {
+          if (!(this instanceof HTMLInputElement && e.originalEvent instanceof WheelEvent)) {
+            return;
+          }
+          if (e.originalEvent.deltaY < 0) {
+            this.stepUp();
+          } else {
+            this.stepDown();
+          }
+          e.stopPropagation();
+          e.preventDefault();
+          $(this).trigger("input");
+        });
+    }
+
     class CatMode {
       table: CatTable;
       finder: JQuery<HTMLElement>;
@@ -387,7 +411,7 @@
         const result = new FindResult();
         const table = new CatTable(finder, result, domain);
         const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-        const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
+        const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get(), " ", createColumnAdjust());
 
         $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
 
@@ -409,7 +433,7 @@
                 .append($('<div class="inner-cell">').append($(e).contents()))
                 .get()
             )
-          )
+          ).width($("input#column-adjust").val() + "%")
         );
       }
 

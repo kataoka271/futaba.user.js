@@ -97,6 +97,7 @@ body > b {
   flex-wrap: wrap;
   align-items: stretch;
   justify-content: center;
+  margin: auto;
 }
 
 #cattable > div.cell, #findresult > div.cell {
@@ -152,10 +153,17 @@ body > b {
 
 #controller > * {
   vertical-align: middle;
+  box-sizing: border-box;
+  height: 24px;
 }
 
 #controller > input[type="search"] {
   font-size: small;
+}
+
+#controller > input[type="number"] {
+  font-size: small;
+  width: 60px;
 }
 
 `);
@@ -386,6 +394,30 @@ body > b {
                 this._timer = setTimeout(() => this.update(), 500);
             }
         }
+        function createColumnAdjust() {
+            $("#cattable, #findresult").width("100%");
+            return $('<input id="column-adjust" type="number" value="100" step="10" max="100" min="0">')
+                .on("input", function () {
+                if (!(this instanceof HTMLInputElement)) {
+                    return;
+                }
+                return $("#cattable, #findresult").width(`${this.value}%`);
+            })
+                .on("wheel", function (e) {
+                if (!(this instanceof HTMLInputElement && e.originalEvent instanceof WheelEvent)) {
+                    return;
+                }
+                if (e.originalEvent.deltaY < 0) {
+                    this.stepUp();
+                }
+                else {
+                    this.stepDown();
+                }
+                e.stopPropagation();
+                e.preventDefault();
+                $(this).trigger("input");
+            });
+        }
         class CatMode {
             constructor(domain) {
                 this.sortOption = {};
@@ -398,7 +430,7 @@ body > b {
                 const result = new FindResult();
                 const table = new CatTable(finder, result, domain);
                 const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-                const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
+                const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get(), " ", createColumnAdjust());
                 $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
                 table.update();
                 setInterval(() => this.onTimer(), 2000);
@@ -410,7 +442,7 @@ body > b {
             transform() {
                 $("#cattable").replaceWith($('<div id="cattable">').append($("#cattable td").map((i, e) => $('<div class="cell">')
                     .append($('<div class="inner-cell">').append($(e).contents()))
-                    .get())));
+                    .get())).width($("input#column-adjust").val() + "%"));
             }
             overrideCatalogLinks() {
                 $("body > a, body > b > a")
