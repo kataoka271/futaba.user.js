@@ -632,7 +632,7 @@
           if (anchor.closest("table")?.classList.contains("resnew")) {
             div.addClass("resnew");
           }
-          return div.data("index", i).get(0);
+          return div.get(0);
         });
         this.thumbs = anchors.map((i, anchor) => {
           const img = $('<img loading="lazy">').attr("src", $("img", anchor).attr("src") ?? anchor.href);
@@ -727,15 +727,15 @@
       }
 
       onClick(e: JQuery.TriggeredEvent): void {
-        if (!(e.target instanceof HTMLImageElement)) {
-          return;
+        if (e.target instanceof HTMLImageElement && e.target.parentElement instanceof HTMLAnchorElement) {
+          this.imageViewer.show(e.target.parentElement);
+          e.stopPropagation();
+          e.preventDefault();
+        } else if (e.target instanceof HTMLAnchorElement && e.target.firstElementChild instanceof HTMLImageElement) {
+          this.imageViewer.show(e.target);
+          e.stopPropagation();
+          e.preventDefault();
         }
-        if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
-          return;
-        }
-        this.imageViewer.show(e.target.parentElement);
-        e.stopPropagation();
-        e.preventDefault();
       }
 
       quote(anchor: JQuery<HTMLElement>): JQuery<HTMLElement> {

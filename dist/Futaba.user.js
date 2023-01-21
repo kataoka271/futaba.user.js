@@ -882,7 +882,7 @@ body.filter-images div.thre table:not(.resnew) {
                     if ((_b = anchor.closest("table")) === null || _b === void 0 ? void 0 : _b.classList.contains("resnew")) {
                         div.addClass("resnew");
                     }
-                    return div.data("index", i).get(0);
+                    return div.get(0);
                 });
                 this.thumbs = anchors.map((i, anchor) => {
                     var _a, _b;
@@ -969,15 +969,16 @@ body.filter-images div.thre table:not(.resnew) {
                 }
             }
             onClick(e) {
-                if (!(e.target instanceof HTMLImageElement)) {
-                    return;
+                if (e.target instanceof HTMLImageElement && e.target.parentElement instanceof HTMLAnchorElement) {
+                    this.imageViewer.show(e.target.parentElement);
+                    e.stopPropagation();
+                    e.preventDefault();
                 }
-                if (!(e.target.parentElement instanceof HTMLAnchorElement)) {
-                    return;
+                else if (e.target instanceof HTMLAnchorElement && e.target.firstElementChild instanceof HTMLImageElement) {
+                    this.imageViewer.show(e.target);
+                    e.stopPropagation();
+                    e.preventDefault();
                 }
-                this.imageViewer.show(e.target.parentElement);
-                e.stopPropagation();
-                e.preventDefault();
             }
             quote(anchor) {
                 const text = anchor
