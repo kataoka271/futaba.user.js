@@ -29,7 +29,7 @@
     offset: number;
   }
 
-  const getKey = (domain: string, href: string) => {
+  const getKey = (domain: string, href: string): string | undefined => {
     const mo = /([0-9]+)\.htm$/.exec(href);
     if (mo != null) {
       return domain + "#" + mo[1];
@@ -40,7 +40,7 @@
     return JSON.parse(GM_getValue("cat", "{}"));
   };
 
-  const saveCatalog = (cat: Catalog, update?: string) => {
+  const saveCatalog = (cat: Catalog, update?: string): void => {
     GM_setValue("cat", JSON.stringify(cat));
     GM_setValue("update", update ?? "0");
   };
@@ -51,9 +51,12 @@
     return update;
   };
 
-  type AutoUpdateEventHandler = { onUpdate: () => void; onSelect: (text: string, value: number) => void };
+  interface AutoUpdateEventHandler {
+    onUpdate: () => void;
+    onSelect: (text: string, value: number) => void;
+  }
 
-  class AutoUpdateSelect {
+  class AutoUpdateSelection {
     _timer: number;
     _handler: AutoUpdateEventHandler;
     _select: JQuery<HTMLElement>;
@@ -72,7 +75,7 @@
       return this._select;
     }
 
-    addOption(name: string, value: number) {
+    addOption(name: string, value: number): void {
       this._select.append($("<option>").val(value).text(name));
     }
 
@@ -86,7 +89,7 @@
       return ["", 0];
     }
 
-    onInput() {
+    onInput(): void {
       clearTimeout(this._timer);
       const [text, value] = this.getOption();
       console.log("auto-update:", text, value);
@@ -97,7 +100,7 @@
       this._timer = setTimeout(() => this.onTimer(), value * 1000);
     }
 
-    onTimer() {
+    onTimer(): void {
       clearTimeout(this._timer);
       const [, value] = this.getOption();
       console.log("auto-update:", new Date().toLocaleString());
@@ -109,12 +112,7 @@
     }
   }
 
-  GM_registerMenuCommand("履歴削除", () => {
-    GM_deleteValue("cat");
-    GM_deleteValue("update");
-  });
-
-  const onCatMode = (domain: string) => {
+  const onCatMode = (domain: string): void => {
     GM_addStyle(`\
 @@include("Futaba-cat.user.css")
 `);
@@ -266,7 +264,7 @@
         this._column_count = column_count;
       }
 
-      append(elems: JQuery<HTMLElement>) {
+      append(elems: JQuery<HTMLElement>): void {
         elems.each((i, e) => {
           if (this._item_count === 0) {
             this._table.show();
@@ -278,7 +276,7 @@
         });
       }
 
-      clear() {
+      clear(): void {
         this._table.hide();
         this._tbody.empty();
         this._tr = $("<tr>").appendTo(this._tbody);
@@ -293,11 +291,11 @@
         return this._item_count;
       }
 
-      show() {
+      show(): void {
         this._table.show();
       }
 
-      hide() {
+      hide(): void {
         this._table.hide();
       }
     }
@@ -322,9 +320,9 @@
         this._domain = domain;
       }
 
-      update() {
         this._oldcat = loadCatalog();
         this._cat = filterNotExpiredItems(this._oldcat);
+      update(): void {
         $(q_cattable_cells).each((i, elem) => {
           updateCat(this._cat, elem, this._oldcat, this._domain);
         });
@@ -341,11 +339,11 @@
         }
       }
 
-      save() {
         saveCatalog(this._cat);
+      save(): void {
       }
 
-      reload(save?: boolean) {
+      reload(save?: boolean): void {
         $(q_cattable).load(location.href + " #cattable > tbody", () => {
           if (save == null || save) {
             this.save();
@@ -367,7 +365,7 @@
         const column_count = $(q_cattable_firstrow).length;
         const result = new FindResult(column_count);
         const table = new CatTable(finder, result, domain);
-        const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+        const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
         const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
 
         $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
@@ -382,29 +380,29 @@
         this.finder = finder;
       }
 
-      onFocus(e: JQuery.TriggeredEvent) {
+      onFocus(e: JQuery.TriggeredEvent): void {
         if (e.target instanceof HTMLInputElement) {
           e.target.select();
         }
       }
 
-      onUpdate() {
+      onUpdate(): void {
         this.table.reload();
       }
 
-      onSelect() {
+      onSelect(): void {
         return;
       }
 
-      onButtonClick() {
+      onButtonClick(): void {
         this.table.reload();
       }
 
-      onUnload() {
+      onUnload(): void {
         this.table.save();
       }
 
-      onKeyDown(e: JQuery.TriggeredEvent) {
+      onKeyDown(e: JQuery.TriggeredEvent): void {
         if (document.activeElement?.tagName === "INPUT") {
           return;
         }
@@ -415,7 +413,7 @@
         }
       }
 
-      onTimer() {
+      onTimer(): void {
         if (readClearUpdateFlag() === "1") {
           this.table.update();
         }
@@ -425,7 +423,7 @@
     new CatMode(domain);
   };
 
-  const onResMode = (domain: string) => {
+  const onResMode = (domain: string): void => {
     GM_addStyle(`\
 @@include("Futaba-res.user.css")
 `);
@@ -451,7 +449,7 @@
         this.index = 0;
       }
 
-      page(i: number) {
+      page(i: number): void {
         const visible_images = this.images.filter(":visible");
         if (i >= visible_images.length) {
           i = visible_images.length - 1;
@@ -476,21 +474,21 @@
         this.index = i;
       }
 
-      next() {
+      next(): void {
         this.page(this.index + 1);
       }
 
-      prev() {
+      prev(): void {
         this.page(this.index - 1);
       }
 
-      onClose(e: JQuery.TriggeredEvent) {
+      onClose(e: JQuery.TriggeredEvent): void {
         this.destroy();
         e.stopPropagation();
         e.preventDefault();
       }
 
-      onKeyDown(e: JQuery.TriggeredEvent) {
+      onKeyDown(e: JQuery.TriggeredEvent): void {
         if (e.key === "ArrowLeft") {
           this.prev();
         } else if (e.key === "ArrowRight") {
@@ -520,7 +518,7 @@
         e.preventDefault();
       }
 
-      onWheel(e: JQuery.TriggeredEvent) {
+      onWheel(e: JQuery.TriggeredEvent): void {
         if (!(e.originalEvent instanceof WheelEvent)) {
           return;
         }
@@ -533,7 +531,7 @@
         e.preventDefault();
       }
 
-      show(image: HTMLAnchorElement) {
+      show(image: HTMLAnchorElement): void {
         const anchors = $<HTMLAnchorElement>(q_images).parent();
         this.images = anchors.map((i, anchor) => {
           const ext = anchor.href.split(".").slice(-1)[0].toLowerCase();
@@ -583,7 +581,7 @@
         }, 100);
       }
 
-      destroy() {
+      destroy(): void {
         $("#gallery").show().trigger("focus");
         $("#image-view").remove();
       }
@@ -596,7 +594,7 @@
         this.imageViewer = new ImageViewer();
       }
 
-      create() {
+      create(): void {
         const anchors = $<HTMLAnchorElement>(q_images).parent();
         if (anchors.length === 0) {
           return;
@@ -610,13 +608,13 @@
           .trigger("focus");
       }
 
-      onClose(e: JQuery.TriggeredEvent) {
+      onClose(e: JQuery.TriggeredEvent): void {
         this.destroy();
         e.stopPropagation();
         e.preventDefault();
       }
 
-      onKeyDown(e: JQuery.TriggeredEvent) {
+      onKeyDown(e: JQuery.TriggeredEvent): void {
         if (e.key === "Escape" || e.key === "Esc") {
           this.destroy();
           e.stopPropagation();
@@ -624,7 +622,7 @@
         }
       }
 
-      onClick(e: JQuery.TriggeredEvent) {
+      onClick(e: JQuery.TriggeredEvent): void {
         if (!(e.target instanceof HTMLImageElement)) {
           return;
         }
@@ -670,7 +668,7 @@
         return div;
       }
 
-      destroy() {
+      destroy(): void {
         $("#gallery-button").removeClass("enable");
         $("#gallery").remove();
         this.imageViewer.destroy();
@@ -678,7 +676,7 @@
     }
 
     class TreeView {
-      make() {
+      make(): void {
         let quotes: { text: string; res: HTMLElement; resnew: boolean }[] = [];
         $(q_res_notnew).last().after($('<span id="resnew">'));
         $(q_table)
@@ -708,7 +706,7 @@
           });
       }
 
-      flat() {
+      flat(): void {
         const array: JQuery<HTMLElement>[] = [];
         $(q_res_resnum).each((i, e) => {
           const span = $(e);
@@ -742,7 +740,7 @@
         this._pause = false;
       }
 
-      start() {
+      start(): void {
         if (this._timer > 0) {
           return;
         }
@@ -750,24 +748,24 @@
         this._timer = setTimeout(() => this.onTimer(), this.tm);
       }
 
-      onTimer() {
+      onTimer(): void {
         if (!this._pause) {
           scrollBy({ left: this.dx, top: this.dy, behavior: "smooth" });
         }
         this._timer = setTimeout(() => this.onTimer(), this.tm);
       }
 
-      stop() {
+      stop(): void {
         clearTimeout(this._timer);
         this._pause = false;
         this._timer = 0;
       }
 
-      pause() {
+      pause(): void {
         this._pause = true;
       }
 
-      resume() {
+      resume(): void {
         this._pause = false;
       }
 
@@ -807,21 +805,20 @@
         this.treeview = treeview;
       }
 
-      buttons() {
-        return [
-          $('<a class="cornar-first" id="gallery-button">画像一覧</a>').on("click", (e) => this.toggleGallery(e)),
-          $("<a>画像</a>").on("click", (e) => this.filterImages(e)),
-          $("<a>新着</a>").on("click", (e) => this.filterResNew(e)),
-          $('<a class="cornar-last">ツリー表示</a>').on("click", (e) => this.toggleTreeView(e)),
-        ];
+      buttons(): JQuery<HTMLElement> {
+        return $('<a class="cornar-first" id="gallery-button">画像一覧</a>')
+          .on("click", (e) => this.toggleGallery(e))
+          .add($("<a>画像</a>").on("click", (e) => this.filterImages(e)))
+          .add($("<a>新着</a>").on("click", (e) => this.filterResNew(e)))
+          .add($('<a class="cornar-last">ツリー表示</a>').on("click", (e) => this.toggleTreeView(e)));
       }
 
-      toggleButton(e: JQuery.TriggeredEvent) {
+      toggleButton(e: JQuery.TriggeredEvent): boolean {
         e.preventDefault();
         return $(e.target).toggleClass("enable").hasClass("enable");
       }
 
-      toggleGallery(e: JQuery.TriggeredEvent) {
+      toggleGallery(e: JQuery.TriggeredEvent): void {
         if (this.toggleButton(e)) {
           this.gallery.create();
         } else {
@@ -829,7 +826,7 @@
         }
       }
 
-      filterImages(e: JQuery.TriggeredEvent) {
+      filterImages(e: JQuery.TriggeredEvent): void {
         if (this.toggleButton(e)) {
           $("body").addClass("filter-images");
         } else {
@@ -837,7 +834,7 @@
         }
       }
 
-      filterResNew(e: JQuery.TriggeredEvent) {
+      filterResNew(e: JQuery.TriggeredEvent): void {
         if (this.toggleButton(e)) {
           $("body").addClass("filter-resnew");
         } else {
@@ -845,7 +842,7 @@
         }
       }
 
-      toggleTreeView(e: JQuery.TriggeredEvent) {
+      toggleTreeView(e: JQuery.TriggeredEvent): void {
         if (this.toggleButton(e)) {
           this.treeview.make();
         } else {
@@ -863,7 +860,7 @@
         this._key = key;
       }
 
-      onTimer(retry: number, param?: UpdateParam) {
+      onTimer(retry: number, param?: UpdateParam): void {
         const cat = loadCatalog();
         const key = this._key;
         const res = $(q_res_resnum);
@@ -889,13 +886,13 @@
         }
       }
 
-      watch() {
+      watch(): void {
         $(q_contres).on("click", (e, param) => {
           setTimeout((retry: number, param?: UpdateParam) => this.onTimer(retry, param), 100, 10, param);
         });
       }
 
-      update(param?: UpdateParam) {
+      update(param?: UpdateParam): void {
         $(q_contres).trigger("click", param);
       }
     }
@@ -941,7 +938,7 @@
         this.updater = new Updater(key);
         this.updater.watch();
         this.autoScr = new AutoScroller();
-        const select = new AutoUpdateSelect(
+        const select = new AutoUpdateSelection(
           this,
           ["OFF", 0],
           ["SCR", 0], // auto-scroll, no auto-update
@@ -961,12 +958,12 @@
         $(q_thre).on("click", (e, suppress?) => this.onClick(e, suppress));
       }
 
-      seek(resnum: number) {
+      seek(resnum: number): void {
         const res = $(q_res);
         document.body.scrollTo(0, res.eq(resnum).offset()?.top ?? 0);
       }
 
-      onClick(e: JQuery.TriggeredEvent, suppress?: boolean) {
+      onClick(e: JQuery.TriggeredEvent, suppress?: boolean): void {
         if (!suppress && e.target.tagName === "IMG" && e.target.parentElement.tagName === "A") {
           const imageViewer = new ImageViewer();
           imageViewer.show(e.target.parentElement);
@@ -975,7 +972,7 @@
         }
       }
 
-      onHotkey(e: JQuery.TriggeredEvent) {
+      onHotkey(e: JQuery.TriggeredEvent): void {
         if (document.activeElement?.tagName === "INPUT") {
           return;
         }
@@ -1005,17 +1002,17 @@
         }
       }
 
-      onUnload() {
+      onUnload(): void {
         const newcat = loadCatalog();
         newcat[this.key].offset = scrollY;
         saveCatalog(newcat, "1");
       }
 
-      onUpdate() {
+      onUpdate(): void {
         this.updater.update({ preserve: true });
       }
 
-      onSelect(text: string, value: number) {
+      onSelect(text: string, value: number): void {
         console.log("auto-scroll", text, value);
         if (text === "OFF") {
           this.autoScr.stop();
@@ -1026,7 +1023,7 @@
         }
       }
 
-      onPlayVideo(e: JQuery.TriggeredEvent) {
+      onPlayVideo(e: JQuery.TriggeredEvent): void {
         if (e.target.tagName === "IMG" && e.target.parentElement?.tagName === "A") {
           const img = $(e.target);
           const src = img.attr("src");
@@ -1045,7 +1042,7 @@
         }
       }
 
-      onCloseVideo(e: JQuery.TriggeredEvent) {
+      onCloseVideo(e: JQuery.TriggeredEvent): void {
         if (e.target.tagName === "DIV" || e.target.tagName === "TD") {
           const video = $("video.extendWebm", e.target);
           if (video.length > 0) {
@@ -1072,7 +1069,12 @@
     new ResMode(key);
   };
 
-  function main() {
+  GM_registerMenuCommand("履歴削除", () => {
+    GM_deleteValue("cat");
+    GM_deleteValue("update");
+  });
+
+  function main(): void {
     const mo = /^https?:\/\/(\w+)\./.exec(location.href);
     const domain: string = mo == null ? "" : mo[1];
 
