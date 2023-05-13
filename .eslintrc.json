@@ -15,7 +15,8 @@
     "rules": {
         "semi": ["error", "always"],
         "eqeqeq": ["error", "always", {"null": "never"}],
-        "quotes": ["error", "double", {"avoidEscape": true}]
+        "quotes": ["error", "double", {"avoidEscape": true}],
+        "@typescript-eslint/explicit-function-return-type": ["warn", {"allowExpressions": true}]
     },
     "ignorePatterns": ["gulpfile.js"]
 }
