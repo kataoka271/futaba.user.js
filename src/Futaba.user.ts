@@ -118,6 +118,8 @@
 @@include("Futaba-cat.user.css")
 `);
 
+    console.log("cat-mode is running:", domain);
+
     const q_cattable = "table#cattable";
     const q_cattable_cells = "table#cattable td";
     const q_cattable_firstrow = "table#cattable tr:first-child td";
@@ -346,8 +348,8 @@
       update(): void {
         this._oldcat = new CatView(loadCatalog());
         this._cat = this._oldcat.filterExpiredItems();
-        $(q_cattable_cells).each((i, elem) => {
-          this._cat.update(elem, this._oldcat, this._domain);
+        $(q_cattable_cells).each((i, cell) => {
+          this._cat.update(cell, this._oldcat, this._domain);
         });
         this._result.hide();
         this._result.clear();
@@ -450,6 +452,8 @@
     GM_addStyle(`\
 @@include("Futaba-res.user.css")
 `);
+
+    console.log("res-mode is running:", domain);
 
     const q_thre = "div.thre";
     const q_table = "div.thre > table";

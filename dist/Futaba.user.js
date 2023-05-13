@@ -118,6 +118,7 @@ td.catup .resnum {
 }
 
 `);
+        console.log("cat-mode is running:", domain);
         const q_cattable = "table#cattable";
         const q_cattable_cells = "table#cattable td";
         const q_cattable_firstrow = "table#cattable tr:first-child td";
@@ -321,8 +322,8 @@ td.catup .resnum {
             update() {
                 this._oldcat = new CatView(loadCatalog());
                 this._cat = this._oldcat.filterExpiredItems();
-                $(q_cattable_cells).each((i, elem) => {
-                    this._cat.update(elem, this._oldcat, this._domain);
+                $(q_cattable_cells).each((i, cell) => {
+                    this._cat.update(cell, this._oldcat, this._domain);
                 });
                 this._result.hide();
                 this._result.clear();
@@ -607,6 +608,7 @@ body.filter-images div.thre table:not(.resimg) {
 }
 
 `);
+        console.log("res-mode is running:", domain);
         const q_thre = "div.thre";
         const q_table = "div.thre > table";
         const q_res = "div.thre > table > tbody > tr > td.rtd";
