@@ -33,7 +33,7 @@
         GM_setValue("update", "0");
         return update;
     };
-    class AutoUpdateSelect {
+    class AutoUpdateSelection {
         constructor(handler, ...options) {
             this._timer = 0;
             this._handler = handler;
@@ -79,10 +79,6 @@
             this._timer = setTimeout(() => this.onTimer(), value * 1000);
         }
     }
-    GM_registerMenuCommand("履歴削除", () => {
-        GM_deleteValue("cat");
-        GM_deleteValue("update");
-    });
     const onCatMode = (domain) => {
         GM_addStyle(`\
 .resnum {
@@ -150,109 +146,124 @@ td.catup .resnum {
                 .replace(/ﾞ/g, "゛")
                 .replace(/ﾟ/g, "゜");
         }
-        const findItemsText = (text) => {
-            const text2 = normalizeText(text);
-            return $(q_cattable_cells).filter((i, e) => {
-                if (!e.textContent) {
-                    return false;
+        class CatView {
+            constructor(cat) {
+                this._cat = cat;
+            }
+            save(update) {
+                saveCatalog(this._cat, update);
+            }
+            get(key) {
+                return this._cat[key];
+            }
+            update(content, oldcat, domain) {
+                const a = $("a", content);
+                const href = a.attr("href");
+                if (href == null) {
+                    return;
                 }
-                return normalizeText(e.textContent).includes(text2);
-            });
-        };
-        const findItemsHist = (cat, domain) => {
-            return $(q_cattable_cells).filter((i, e) => {
-                var _a, _b;
-                const href = $("a", e).attr("href");
-                if (href != null) {
+                const key = getKey(domain, href);
+                if (key == null) {
+                    return;
+                }
+                a.attr("target", key);
+                const res = parseInt($("font", content).text());
+                const title = $("small", content).text();
+                if (this._cat[key] != null) {
+                    this._cat[key] = {
+                        href: href,
+                        res: res,
+                        readres: this._cat[key].readres,
+                        title: title,
+                        updateTime: Date.now(),
+                        offset: this._cat[key].offset,
+                    };
+                }
+                else {
+                    this._cat[key] = {
+                        href: href,
+                        res: res,
+                        readres: -1,
+                        title: title,
+                        updateTime: Date.now(),
+                        offset: 0,
+                    };
+                }
+                this.render(content, oldcat, key);
+            }
+            render(content, oldcat, key) {
+                let resnum = $("span.resnum", content).first();
+                if (resnum.length === 0) {
+                    resnum = $('<span class="resnum">');
+                    $("font", content).after(resnum);
+                }
+                resnum.empty();
+                $(content).removeClass("resup reseq thrnew catup");
+                if (oldcat.get(key) != null) {
+                    if (oldcat.get(key).readres >= 0) {
+                        const resDiff = this._cat[key].res - oldcat.get(key).readres;
+                        if (resDiff > 0) {
+                            resnum.text("+" + resDiff);
+                            $(content).addClass("resup");
+                        }
+                        else if (resDiff < 0) {
+                            this._cat[key].res = oldcat.get(key).readres;
+                            $("font", content).text(this._cat[key].res);
+                            $(content).addClass("reseq");
+                        }
+                        else {
+                            $(content).addClass("reseq");
+                        }
+                    }
+                    else if (oldcat.get(key).res >= 0) {
+                        const catDiff = this._cat[key].res - oldcat.get(key).res;
+                        if (catDiff > 0) {
+                            resnum.text("+" + catDiff);
+                            $(content).addClass("catup");
+                        }
+                    }
+                }
+                else {
+                    // NEW
+                    $(content).addClass("thrnew");
+                }
+            }
+            findText(text) {
+                const norm = normalizeText(text);
+                return $(q_cattable_cells).filter((i, e) => {
+                    if (!e.textContent) {
+                        return false;
+                    }
+                    return normalizeText(e.textContent).includes(norm);
+                });
+            }
+            findHist(domain) {
+                return $(q_cattable_cells).filter((i, e) => {
+                    var _a, _b;
+                    const href = $("a", e).attr("href");
+                    if (href == null) {
+                        return false;
+                    }
                     const key = getKey(domain, href);
-                    if (key != null) {
-                        return ((_b = (_a = cat[key]) === null || _a === void 0 ? void 0 : _a.readres) !== null && _b !== void 0 ? _b : 0) >= 0;
+                    if (key == null) {
+                        return false;
+                    }
+                    return ((_b = (_a = this._cat[key]) === null || _a === void 0 ? void 0 : _a.readres) !== null && _b !== void 0 ? _b : 0) >= 0;
+                });
+            }
+            filterExpiredItems() {
+                const expireTime = 259200000; // 3days
+                const now = Date.now();
+                const cat = {};
+                for (const key in this._cat) {
+                    const item = this._cat[key];
+                    if (now - item.updateTime < expireTime) {
+                        cat[key] = item;
                     }
                 }
-                return false;
-            });
-        };
-        const updateCat = (cat, td, oldcat, domain) => {
-            const a = $("a", td);
-            const href = a.attr("href");
-            if (href == null) {
-                return;
+                return new CatView(cat);
             }
-            const key = getKey(domain, href);
-            if (key == null) {
-                return;
-            }
-            a.attr("target", key);
-            const res = parseInt($("font", td).text());
-            const title = $("small", td).text();
-            if (cat[key] != null) {
-                cat[key] = {
-                    href: href,
-                    res: res,
-                    readres: cat[key].readres,
-                    title: title,
-                    updateTime: Date.now(),
-                    offset: cat[key].offset,
-                };
-            }
-            else {
-                cat[key] = {
-                    href: href,
-                    res: res,
-                    readres: -1,
-                    title: title,
-                    updateTime: Date.now(),
-                    offset: 0,
-                };
-            }
-            let resnum = $("span.resnum", td).first();
-            if (resnum.length === 0) {
-                resnum = $('<span class="resnum">');
-                $("font", td).after(resnum);
-            }
-            resnum.empty();
-            $(td).removeClass("resup reseq thrnew catup");
-            if (oldcat[key] != null) {
-                if (oldcat[key].readres >= 0) {
-                    const resDiff = cat[key].res - oldcat[key].readres;
-                    if (resDiff > 0) {
-                        resnum.text("+" + resDiff);
-                        $(td).addClass("resup");
-                    }
-                    else if (resDiff < 0) {
-                        cat[key].res = oldcat[key].readres;
-                        $("font", td).text(cat[key].res);
-                        $(td).addClass("reseq");
-                    }
-                    else {
-                        $(td).addClass("reseq");
-                    }
-                }
-                else if (oldcat[key].res >= 0) {
-                    const catDiff = cat[key].res - oldcat[key].res;
-                    if (catDiff > 0) {
-                        resnum.text("+" + catDiff);
-                        $(td).addClass("catup");
-                    }
-                }
-            }
-            else {
-                // NEW
-                $(td).addClass("thrnew");
-            }
-        };
-        const filterNotExpiredItems = (oldcat) => {
-            const expireTime = 259200000; // 3days
-            const now = Date.now();
-            const cat = {};
-            for (const key in oldcat) {
-                const item = oldcat[key];
-                if (now - item.updateTime < expireTime) {
-                    cat[key] = item;
-                }
-            }
-            return cat;
-        };
+        }
         class FindResult {
             constructor(column_count = 8) {
                 this._table = $('<table border="1" align="center">').hide();
@@ -296,8 +307,9 @@ td.catup .resnum {
             constructor(finder, result, domain) {
                 this._finder = finder;
                 this._result = result;
-                this._cat = {};
-                this._oldcat = {};
+                this._cat = new CatView({});
+                this._oldcat = new CatView({});
+                this.update();
                 let timer;
                 this._finder.on("input", () => {
                     clearTimeout(timer);
@@ -306,26 +318,26 @@ td.catup .resnum {
                 this._domain = domain;
             }
             update() {
-                this._oldcat = loadCatalog();
-                this._cat = filterNotExpiredItems(this._oldcat);
+                this._oldcat = new CatView(loadCatalog());
+                this._cat = this._oldcat.filterExpiredItems();
                 $(q_cattable_cells).each((i, elem) => {
-                    updateCat(this._cat, elem, this._oldcat, this._domain);
+                    this._cat.update(elem, this._oldcat, this._domain);
                 });
                 this._result.hide();
                 this._result.clear();
                 const value = this._finder.val();
                 if (typeof value === "string" && value !== "") {
-                    this._result.append(findItemsText(value));
+                    this._result.append(this._cat.findText(value));
                 }
                 else {
-                    this._result.append(findItemsHist(this._cat, this._domain));
+                    this._result.append(this._cat.findHist(this._domain));
                 }
                 if (this._result.count() > 0) {
                     this._result.show();
                 }
             }
             save() {
-                saveCatalog(this._cat);
+                this._cat.save();
             }
             reload(save) {
                 $(q_cattable).load(location.href + " #cattable > tbody", () => {
@@ -345,7 +357,7 @@ td.catup .resnum {
                 const column_count = $(q_cattable_firstrow).length;
                 const result = new FindResult(column_count);
                 const table = new CatTable(finder, result, domain);
-                const select = new AutoUpdateSelect(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
+                const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
                 const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get());
                 $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
                 table.update();
@@ -944,12 +956,11 @@ body.filter-images div.thre table:not(.resimg) {
                 this.treeview = treeview;
             }
             buttons() {
-                return [
-                    $('<a class="cornar-first" id="gallery-button">画像一覧</a>').on("click", (e) => this.toggleGallery(e)),
-                    $("<a>画像</a>").on("click", (e) => this.filterImages(e)),
-                    $("<a>新着</a>").on("click", (e) => this.filterResNew(e)),
-                    $('<a class="cornar-last">ツリー表示</a>').on("click", (e) => this.toggleTreeView(e)),
-                ];
+                return $('<a class="cornar-first" id="gallery-button">画像一覧</a>')
+                    .on("click", (e) => this.toggleGallery(e))
+                    .add($("<a>画像</a>").on("click", (e) => this.filterImages(e)))
+                    .add($("<a>新着</a>").on("click", (e) => this.filterResNew(e)))
+                    .add($('<a class="cornar-last">ツリー表示</a>').on("click", (e) => this.toggleTreeView(e)));
             }
             toggleButton(e) {
                 e.preventDefault();
@@ -1068,7 +1079,7 @@ body.filter-images div.thre table:not(.resimg) {
                 this.updater = new Updater(key);
                 this.updater.watch();
                 this.autoScr = new AutoScroller();
-                const select = new AutoUpdateSelect(this, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
+                const select = new AutoUpdateSelection(this, ["OFF", 0], ["SCR", 0], // auto-scroll, no auto-update
                 ["15s", 15], ["30s", 30], ["1min", 60]);
                 const gallery = new Gallery();
                 const treeview = new TreeView();
@@ -1195,6 +1206,10 @@ body.filter-images div.thre table:not(.resimg) {
         }
         new ResMode(key);
     };
+    GM_registerMenuCommand("履歴削除", () => {
+        GM_deleteValue("cat");
+        GM_deleteValue("update");
+    });
     function main() {
         const mo = /^https?:\/\/(\w+)\./.exec(location.href);
         const domain = mo == null ? "" : mo[1];

@@ -148,106 +148,127 @@
         .replace(/ﾟ/g, "゜");
     }
 
-    const findItemsText = (text: string): JQuery<HTMLElement> => {
-      const text2 = normalizeText(text);
-      return $(q_cattable_cells).filter((i, e) => {
-        if (!e.textContent) {
-          return false;
-        }
-        return normalizeText(e.textContent).includes(text2);
-      });
-    };
+    class CatView {
+      _cat: Catalog;
 
-    const findItemsHist = (cat: Catalog, domain: string): JQuery<HTMLElement> => {
-      return $(q_cattable_cells).filter((i, e) => {
-        const href = $("a", e).attr("href");
-        if (href != null) {
+      constructor(cat: Catalog) {
+        this._cat = cat;
+      }
+
+      save(update?: string): void {
+        saveCatalog(this._cat, update);
+      }
+
+      get(key: string): CatalogItem {
+        return this._cat[key];
+      }
+
+      update(content: HTMLElement, oldcat: CatView, domain: string): void {
+        const a = $("a", content);
+        const href = a.attr("href");
+        if (href == null) {
+          return;
+        }
+        const key = getKey(domain, href);
+        if (key == null) {
+          return;
+        }
+        a.attr("target", key);
+        const res = parseInt($("font", content).text());
+        const title = $("small", content).text();
+        if (this._cat[key] != null) {
+          this._cat[key] = {
+            href: href,
+            res: res,
+            readres: this._cat[key].readres,
+            title: title,
+            updateTime: Date.now(),
+            offset: this._cat[key].offset,
+          };
+        } else {
+          this._cat[key] = {
+            href: href,
+            res: res,
+            readres: -1,
+            title: title,
+            updateTime: Date.now(),
+            offset: 0,
+          };
+        }
+        this.render(content, oldcat, key);
+      }
+
+      render(content: HTMLElement, oldcat: CatView, key: string): void {
+        let resnum = $("span.resnum", content).first();
+        if (resnum.length === 0) {
+          resnum = $('<span class="resnum">');
+          $("font", content).after(resnum);
+        }
+        resnum.empty();
+        $(content).removeClass("resup reseq thrnew catup");
+        if (oldcat.get(key) != null) {
+          if (oldcat.get(key).readres >= 0) {
+            const resDiff = this._cat[key].res - oldcat.get(key).readres;
+            if (resDiff > 0) {
+              resnum.text("+" + resDiff);
+              $(content).addClass("resup");
+            } else if (resDiff < 0) {
+              this._cat[key].res = oldcat.get(key).readres;
+              $("font", content).text(this._cat[key].res);
+              $(content).addClass("reseq");
+            } else {
+              $(content).addClass("reseq");
+            }
+          } else if (oldcat.get(key).res >= 0) {
+            const catDiff = this._cat[key].res - oldcat.get(key).res;
+            if (catDiff > 0) {
+              resnum.text("+" + catDiff);
+              $(content).addClass("catup");
+            }
+          }
+        } else {
+          // NEW
+          $(content).addClass("thrnew");
+        }
+      }
+
+      findText(text: string): JQuery<HTMLElement> {
+        const norm = normalizeText(text);
+        return $(q_cattable_cells).filter((i, e) => {
+          if (!e.textContent) {
+            return false;
+          }
+          return normalizeText(e.textContent).includes(norm);
+        });
+      }
+
+      findHist(domain: string): JQuery<HTMLElement> {
+        return $(q_cattable_cells).filter((i, e) => {
+          const href = $("a", e).attr("href");
+          if (href == null) {
+            return false;
+          }
           const key = getKey(domain, href);
-          if (key != null) {
-            return (cat[key]?.readres ?? 0) >= 0;
+          if (key == null) {
+            return false;
           }
-        }
-        return false;
-      });
-    };
+          return (this._cat[key]?.readres ?? 0) >= 0;
+        });
+      }
 
-    const updateCat = (cat: Catalog, td: HTMLElement, oldcat: Catalog, domain: string) => {
-      const a = $("a", td);
-      const href = a.attr("href");
-      if (href == null) {
-        return;
-      }
-      const key = getKey(domain, href);
-      if (key == null) {
-        return;
-      }
-      a.attr("target", key);
-      const res = parseInt($("font", td).text());
-      const title = $("small", td).text();
-      if (cat[key] != null) {
-        cat[key] = {
-          href: href,
-          res: res,
-          readres: cat[key].readres,
-          title: title,
-          updateTime: Date.now(),
-          offset: cat[key].offset,
-        };
-      } else {
-        cat[key] = {
-          href: href,
-          res: res,
-          readres: -1,
-          title: title,
-          updateTime: Date.now(),
-          offset: 0,
-        };
-      }
-      let resnum = $("span.resnum", td).first();
-      if (resnum.length === 0) {
-        resnum = $('<span class="resnum">');
-        $("font", td).after(resnum);
-      }
-      resnum.empty();
-      $(td).removeClass("resup reseq thrnew catup");
-      if (oldcat[key] != null) {
-        if (oldcat[key].readres >= 0) {
-          const resDiff = cat[key].res - oldcat[key].readres;
-          if (resDiff > 0) {
-            resnum.text("+" + resDiff);
-            $(td).addClass("resup");
-          } else if (resDiff < 0) {
-            cat[key].res = oldcat[key].readres;
-            $("font", td).text(cat[key].res);
-            $(td).addClass("reseq");
-          } else {
-            $(td).addClass("reseq");
-          }
-        } else if (oldcat[key].res >= 0) {
-          const catDiff = cat[key].res - oldcat[key].res;
-          if (catDiff > 0) {
-            resnum.text("+" + catDiff);
-            $(td).addClass("catup");
+      filterExpiredItems(): CatView {
+        const expireTime = 259200000; // 3days
+        const now = Date.now();
+        const cat: Catalog = {};
+        for (const key in this._cat) {
+          const item = this._cat[key];
+          if (now - item.updateTime < expireTime) {
+            cat[key] = item;
           }
         }
-      } else {
-        // NEW
-        $(td).addClass("thrnew");
+        return new CatView(cat);
       }
-    };
-
-    const filterNotExpiredItems = (oldcat: Catalog): Catalog => {
-      const expireTime = 259200000; // 3days
-      const now = Date.now();
-      const cat: Catalog = {};
-      for (const key in oldcat) {
-        const item = oldcat[key];
-        if (now - item.updateTime < expireTime) {
-          cat[key] = item;
-        }
-      }
-      return cat;
-    };
+    }
 
     class FindResult {
       _table: JQuery<HTMLElement>;
@@ -303,15 +324,16 @@
     class CatTable {
       _finder: JQuery<HTMLElement>;
       _result: FindResult;
-      _cat: Catalog;
-      _oldcat: Catalog;
+      _cat: CatView;
+      _oldcat: CatView;
       _domain: string;
 
       constructor(finder: JQuery<HTMLElement>, result: FindResult, domain: string) {
         this._finder = finder;
         this._result = result;
-        this._cat = {};
-        this._oldcat = {};
+        this._cat = new CatView({});
+        this._oldcat = new CatView({});
+        this.update();
         let timer: number;
         this._finder.on("input", () => {
           clearTimeout(timer);
@@ -320,27 +342,27 @@
         this._domain = domain;
       }
 
-        this._oldcat = loadCatalog();
-        this._cat = filterNotExpiredItems(this._oldcat);
       update(): void {
+        this._oldcat = new CatView(loadCatalog());
+        this._cat = this._oldcat.filterExpiredItems();
         $(q_cattable_cells).each((i, elem) => {
-          updateCat(this._cat, elem, this._oldcat, this._domain);
+          this._cat.update(elem, this._oldcat, this._domain);
         });
         this._result.hide();
         this._result.clear();
         const value = this._finder.val();
         if (typeof value === "string" && value !== "") {
-          this._result.append(findItemsText(value));
+          this._result.append(this._cat.findText(value));
         } else {
-          this._result.append(findItemsHist(this._cat, this._domain));
+          this._result.append(this._cat.findHist(this._domain));
         }
         if (this._result.count() > 0) {
           this._result.show();
         }
       }
 
-        saveCatalog(this._cat);
       save(): void {
+        this._cat.save();
       }
 
       reload(save?: boolean): void {
