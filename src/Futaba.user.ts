@@ -115,7 +115,7 @@
 
   const onCatMode = (domain: string): void => {
     GM_addStyle(`\
-@@include("Futaba-cat.user.css")
+@@include("../dist/css/Futaba-cat.user.css")
 `);
 
     console.log("cat-mode is running:", domain);
@@ -499,7 +499,7 @@
 
   const onResMode = (domain: string): void => {
     GM_addStyle(`\
-@@include("Futaba-res.user.css")
+@@include("../dist/css/Futaba-res.user.css")
 `);
 
     console.log("res-mode is running:", domain);

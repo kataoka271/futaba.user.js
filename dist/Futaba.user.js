@@ -85,9 +85,11 @@
 body > a.select, body > b > a.select {
   font-weight: bold;
 }
+
 body > b {
   font-weight: normal;
 }
+
 #cattable, #findresult {
   display: flex;
   flex-direction: row;
@@ -95,6 +97,7 @@ body > b {
   align-items: stretch;
   justify-content: center;
 }
+
 #cattable > div.cell, #findresult > div.cell {
   border: 1px solid #800000;
   margin: 1px;
@@ -108,37 +111,48 @@ body > b {
   flex-shrink: 0;
   flex-basis: 65px;
 }
+
 .resnum {
   margin-left: 2px;
   font-size: 70%;
 }
+
 .resup .resnum {
   color: #f02020;
 }
+
 .resup {
   background-color: #fce0d6;
 }
+
 .resdown .resnum {
   color: #2020f0;
 }
+
 .resdown {
   background-color: #cccccc;
 }
+
 .reseq {
   background-color: #cccccc;
 }
+
 .thrnew {
   background-color: #fce0d6;
 }
+
 .catup .resnum {
   color: #f02020;
 }
+
 #controller {
   text-align: center;
 }
+
 #controller > * {
   vertical-align: middle;
 }
+
 #controller > input[type="search"] {
   font-size: small;
 }
@@ -479,9 +493,11 @@ body > b {
 table.resnew > tbody > tr > td.rtd {
   background-color: #fce0d6;
 }
+
 table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
 }
+
 body.filter-resnew div.thre table:not(.resnew),
 body.filter-resnew #gallery > div:not(.resnew),
 body.filter-resnew #image-view > .image-slider > div:not(.resnew),
@@ -489,9 +505,10 @@ body.filter-resnew #image-view > .image-thumbs > img:not(.resnew),
 body.filter-images div.thre table:not(.resimg) {
   display: none;
 }
+
 #auto-scroll-status {
   background-color: rgba(200, 200, 200, 0.8);
-  color: rgb(100, 100, 100);
+  color: #646464;
   font-size: 80%;
   position: fixed;
   bottom: 50px;
@@ -501,41 +518,50 @@ body.filter-images div.thre table:not(.resimg) {
   padding: 5px 10px;
   border-radius: 2px;
 }
+
 #auto-update-interval {
   display: inline-block;
 }
+
 #commands {
   position: fixed;
   bottom: 10px;
   right: 10px;
   z-index: 1000;
 }
+
 #commands a {
-  background-color: rgb(200, 200, 200);
-  border: 2px outset rgb(200, 200, 200);
-  color: rgb(100, 100, 100);
+  background-color: #c8c8c8;
+  border: 2px outset #c8c8c8;
+  color: #646464;
   font-size: 90%;
   padding: 0.2em 0.85em;
   cursor: pointer;
   display: inline-block;
 }
+
 #commands a:hover {
-  color: rgb(200, 0, 0);
+  color: #c80000;
 }
+
 #commands a.cornar-first {
   border-radius: 5px / 20% 0 0 20%;
 }
+
 #commands a.cornar-last {
   border-radius: 5px / 0 20% 20% 0;
 }
+
 #commands a.enable {
-  background-color: rgb(150, 150, 150);
+  background-color: #969696;
   border-style: inset;
-  color: rgb(200, 0, 0);
+  color: #c80000;
 }
+
 #commands a.enable:hover {
-  color: rgb(100, 100, 100);
+  color: #646464;
 }
+
 #gallery {
   position: fixed;
   background-color: rgba(0, 0, 0, 0.9);
@@ -546,22 +572,25 @@ body.filter-images div.thre table:not(.resimg) {
   text-align: center;
   overflow-y: scroll;
 }
+
 #gallery > div {
   display: inline-block;
   vertical-align: top;
-  color: rgb(100, 100, 100);
+  color: #646464;
   font-size: 80%;
-  background-color: rgb(20, 20, 20);
+  background-color: #141414;
   width: 250px;
   height: calc(250px + 1.5em);
   margin: 1em;
 }
+
 #gallery > div > a {
   display: inline-block;
   width: 250px;
   height: 250px;
   position: relative;
 }
+
 #gallery > div > a > img {
   margin: 0;
   width: 250px;
@@ -569,19 +598,22 @@ body.filter-images div.thre table:not(.resimg) {
   object-fit: contain;
   object-position: 50% 50%;
 }
+
 #gallery > div.movie > div {
   z-index: 1000;
   position: absolute;
 }
+
 #gallery > div.movie > div > video {
   max-width: none !important;
   max-height: none !important;
   width: 250px;
   height: 250px;
 }
+
 #gallery > div.movie > a::before,
 #gallery > div.anime > a::before {
-  color: rgb(200, 200, 200);
+  color: #c8c8c8;
   font-weight: bold;
   font-size: 9pt;
   content: attr(data-ext);
@@ -589,18 +621,23 @@ body.filter-images div.thre table:not(.resimg) {
   right: 0;
   top: 0;
 }
+
 #gallery > div.movie > a {
-  border: 2px solid rgb(150, 0, 0);
+  border: 2px solid #960000;
 }
+
 #gallery > div.movie > a::before {
-  background-color: rgb(150, 0, 0);
+  background-color: #960000;
 }
+
 #gallery > div.anime > a {
-  border: 2px solid rgb(0, 80, 0);
+  border: 2px solid #005000;
 }
+
 #gallery > div.anime > a::before {
-  background-color: rgb(0, 80, 0);
+  background-color: #005000;
 }
+
 #image-view {
   background-color: black;
   position: fixed;
@@ -612,6 +649,7 @@ body.filter-images div.thre table:not(.resimg) {
   margin: 0;
   overflow: hidden;
 }
+
 #image-view > .image-slider {
   display: flex;
   align-items: center;
@@ -620,26 +658,31 @@ body.filter-images div.thre table:not(.resimg) {
   width: 100%;
   height: calc(100% - 50px);
 }
+
 #image-view > .image-slider > div {
   flex-basis: 100%;
   flex-shrink: 0;
   text-align: center;
 }
+
 #image-view > .image-slider > div > div {
   display: inline-block;
 }
+
 #image-view > .image-slider > div > div > video {
   object-fit: contain;
   object-position: center;
   max-width: calc(100% - 30px) !important;
   max-height: calc(100vh - 50px) !important;
 }
+
 #image-view > .image-slider > div > a > img {
   object-fit: contain;
   object-position: center;
   max-width: 100%;
   max-height: calc(100vh - 50px);
 }
+
 #image-view > .image-thumbs {
   display: flex;
   align-items: center;
@@ -650,6 +693,7 @@ body.filter-images div.thre table:not(.resimg) {
   left: 0;
   bottom: 0;
 }
+
 #image-view > .image-thumbs > img {
   background-color: black;
   flex-basis: 50px;
@@ -661,12 +705,14 @@ body.filter-images div.thre table:not(.resimg) {
   border: 2px solid rgba(0, 0, 0, 0.9);
   box-sizing: border-box;
 }
+
 #image-view > .image-thumbs > img.active {
-  border: 2px solid rgb(200, 0, 0);
+  border: 2px solid #c80000;
 }
+
 #image-view > .image-number {
   background-color: rgba(200, 200, 200, 0.8);
-  color: rgb(20, 20, 20);
+  color: #141414;
   font-weight: bold;
   font-size: small;
   position: fixed;
