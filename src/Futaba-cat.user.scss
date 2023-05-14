@@ -1,41 +1,49 @@
-body > a.select, body > b > a.select {
-  font-weight: bold;
-}
-body > b {
-  font-weight: normal;
+body {
+  > a.select, > b > a.select {
+    font-weight: bold;
+  }
+  > b {
+    font-weight: normal;
+  }
 }
 #cattable, #findresult {
+  border: 1px solid #800000;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   align-items: stretch;
   justify-content: center;
-}
-#cattable > div.cell, #findresult > div.cell {
-  border: 1px solid #800000;
-  margin: 1px;
-  display: flex;
-  position: relative;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-items: center;
-  justify-content: flex-start;
-  flex-grow: 0;
-  flex-shrink: 0;
-  flex-basis: 65px;
+
+  > div.cell {
+    border: 1px solid #800000;
+    margin: 1px;
+    display: flex;
+    position: relative;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    flex-grow: 0;
+    flex-shrink: 0;
+    flex-basis: 65px;
+  }
 }
 .resnum {
   margin-left: 2px;
   font-size: 70%;
-}
-.resup .resnum {
-  color: #f02020;
+
+  .resup & {
+    color: #f02020;
+  }
+  .resdown & {
+    color: #2020f0;
+  }
+  .catup & {
+    color: #f02020;
+  }
 }
 .resup {
   background-color: #fce0d6;
-}
-.resdown .resnum {
-  color: #2020f0;
 }
 .resdown {
   background-color: #cccccc;
@@ -46,15 +54,12 @@ body > b {
 .thrnew {
   background-color: #fce0d6;
 }
-.catup .resnum {
-  color: #f02020;
-}
 #controller {
   text-align: center;
-}
-#controller > * {
-  vertical-align: middle;
-}
-#controller > input[type="search"] {
-  font-size: small;
+  > * {
+    vertical-align: middle;
+  }
+  > input[type="search"] {
+    font-size: small;
+  }
 }

@@ -91,6 +91,7 @@ body > b {
 }
 
 #cattable, #findresult {
+  border: 1px solid #800000;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
@@ -121,12 +122,16 @@ body > b {
   color: #f02020;
 }
 
-.resup {
-  background-color: #fce0d6;
-}
-
 .resdown .resnum {
   color: #2020f0;
+}
+
+.catup .resnum {
+  color: #f02020;
+}
+
+.resup {
+  background-color: #fce0d6;
 }
 
 .resdown {
@@ -139,10 +144,6 @@ body > b {
 
 .thrnew {
   background-color: #fce0d6;
-}
-
-.catup .resnum {
-  color: #f02020;
 }
 
 #controller {
@@ -498,11 +499,20 @@ table.resnew > tbody > tr > td.rtd > .rsc {
   font-weight: bold;
 }
 
-body.filter-resnew div.thre table:not(.resnew),
-body.filter-resnew #gallery > div:not(.resnew),
+body.filter-resnew div.thre table:not(.resnew) {
+  display: none;
+}
+
+body.filter-resnew #gallery > div:not(.resnew) {
+  display: none;
+}
+
 body.filter-resnew #image-view > .image-slider > div:not(.resnew),
-body.filter-resnew #image-view > .image-thumbs > img:not(.resnew),
-body.filter-images div.thre table:not(.resimg) {
+body.filter-resnew #image-view > .image-thumbs > img:not(.resnew) {
+  display: none;
+}
+
+body.filter-images div.thre table:not(.resnew) {
   display: none;
 }
 
@@ -544,14 +554,6 @@ body.filter-images div.thre table:not(.resimg) {
   color: #c80000;
 }
 
-#commands a.cornar-first {
-  border-radius: 5px / 20% 0 0 20%;
-}
-
-#commands a.cornar-last {
-  border-radius: 5px / 0 20% 20% 0;
-}
-
 #commands a.enable {
   background-color: #969696;
   border-style: inset;
@@ -560,6 +562,14 @@ body.filter-images div.thre table:not(.resimg) {
 
 #commands a.enable:hover {
   color: #646464;
+}
+
+#commands a.cornar-first {
+  border-radius: 5px / 20% 0 0 20%;
+}
+
+#commands a.cornar-last {
+  border-radius: 5px / 0 20% 20% 0;
 }
 
 #gallery {
@@ -611,8 +621,11 @@ body.filter-images div.thre table:not(.resimg) {
   height: 250px;
 }
 
-#gallery > div.movie > a::before,
-#gallery > div.anime > a::before {
+#gallery > div.movie > a {
+  border: 2px solid #960000;
+}
+
+#gallery > div.movie > a::before {
   color: #c8c8c8;
   font-weight: bold;
   font-size: 9pt;
@@ -620,13 +633,6 @@ body.filter-images div.thre table:not(.resimg) {
   position: absolute;
   right: 0;
   top: 0;
-}
-
-#gallery > div.movie > a {
-  border: 2px solid #960000;
-}
-
-#gallery > div.movie > a::before {
   background-color: #960000;
 }
 
@@ -635,6 +641,13 @@ body.filter-images div.thre table:not(.resimg) {
 }
 
 #gallery > div.anime > a::before {
+  color: #c8c8c8;
+  font-weight: bold;
+  font-size: 9pt;
+  content: attr(data-ext);
+  position: absolute;
+  right: 0;
+  top: 0;
   background-color: #005000;
 }
 
