@@ -642,6 +642,20 @@ body.filter-images div.thre table:not(.resnew) {
   object-position: 50% 50%;
 }
 
+#gallery > div.saved > a::before {
+  color: #139213;
+  font-weight: bold;
+  font-size: 14pt;
+  content: "\u2714";
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: #005000;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.8;
+}
+
 #gallery > div.movie > div {
   z-index: 1000;
   position: absolute;
@@ -722,11 +736,30 @@ body.filter-images div.thre table:not(.resnew) {
   max-height: calc(100vh - 50px) !important;
 }
 
+#image-view > .image-slider > div > a {
+  display: inline-block;
+  position: relative;
+}
+
 #image-view > .image-slider > div > a > img {
   object-fit: contain;
   object-position: center;
   max-width: 100%;
   max-height: calc(100vh - 50px);
+}
+
+#image-view > .image-slider > div.saved > a::before {
+  color: #139213;
+  font-weight: bold;
+  font-size: 14pt;
+  content: "\u2714";
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: #005000;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.8;
 }
 
 #image-view > .image-thumbs {
@@ -740,20 +773,40 @@ body.filter-images div.thre table:not(.resnew) {
   bottom: 0;
 }
 
-#image-view > .image-thumbs > img {
+#image-view > .image-thumbs > div {
   background-color: black;
   flex-basis: 50px;
   flex-shrink: 0;
-  object-fit: scale-down;
-  object-position: center;
   width: 50px;
   height: 50px;
   border: 2px solid rgba(0, 0, 0, 0.9);
   box-sizing: border-box;
+  position: relative;
 }
 
-#image-view > .image-thumbs > img.active {
+#image-view > .image-thumbs > div > img {
+  object-fit: scale-down;
+  object-position: center;
+  width: 100%;
+  height: 100%;
+}
+
+#image-view > .image-thumbs > div.active {
   border: 2px solid #c80000;
+}
+
+#image-view > .image-thumbs > div.saved::before {
+  color: #139213;
+  font-weight: bold;
+  font-size: 11pt;
+  content: "\u2714";
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: #005000;
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.8;
 }
 
 #image-view > .image-number {
@@ -791,6 +844,30 @@ body.filter-images div.thre table:not(.resnew) {
         const q_images = "div.thre table > tbody > tr > td.rtd a > img, div.thre > a > img";
         const q_maxres = "div.thre > span.maxres"; // tree view recovery point
         const q_contres = "#contres > a";
+        class SavedList {
+            constructor() {
+                this.saved = JSON.parse(GM_getValue("saved", "{}"));
+                const now = Date.now();
+                for (const url in this.saved) {
+                    if (this.saved[url] < now) {
+                        delete this.saved[url];
+                    }
+                }
+                this.save();
+                console.log("SavedList:", this.saved);
+            }
+            save() {
+                GM_setValue("saved", JSON.stringify(this.saved));
+            }
+            has(url) {
+                return url in this.saved;
+            }
+            add(url) {
+                this.saved[url] = Date.now() + 86400000; // 1 day
+                this.save();
+            }
+        }
+        const savedList = new SavedList();
         class ImageViewer {
             constructor() {
                 this.images = $();
@@ -883,13 +960,19 @@ body.filter-images div.thre table:not(.resnew) {
                     if ((_b = anchor.closest("table")) === null || _b === void 0 ? void 0 : _b.classList.contains("resnew")) {
                         div.addClass("resnew");
                     }
+                    if (savedList.has(anchor.href)) {
+                        div.addClass("saved");
+                    }
                     return div.get(0);
                 });
                 this.thumbs = anchors.map((i, anchor) => {
                     var _a, _b;
-                    const img = $('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href);
+                    const img = $("<div>").append($('<img loading="lazy">').attr("src", (_a = $("img", anchor).attr("src")) !== null && _a !== void 0 ? _a : anchor.href));
                     if ((_b = anchor.closest("table")) === null || _b === void 0 ? void 0 : _b.classList.contains("resnew")) {
                         img.addClass("resnew");
+                    }
+                    if (savedList.has(anchor.href)) {
+                        img.addClass("saved");
                     }
                     return img.get(0);
                 });
@@ -919,7 +1002,9 @@ body.filter-images div.thre table:not(.resnew) {
                 }, 100);
             }
             save() {
-                const url = this.images.filter(":visible").eq(this.index).find("a").attr("href");
+                const image = this.images.filter(":visible").eq(this.index);
+                const thumb = this.thumbs.filter(":visible").eq(this.index);
+                const url = image.find("a").attr("href");
                 if (url == null) {
                     return;
                 }
@@ -933,6 +1018,11 @@ body.filter-images div.thre table:not(.resnew) {
                     headers: { Referer: location.href },
                     saveAs: false,
                     onerror: (e) => console.log(e),
+                    onload: () => {
+                        savedList.add(url);
+                        image.addClass("saved");
+                        thumb.addClass("saved");
+                    },
                 });
             }
             destroy() {
@@ -1015,6 +1105,9 @@ body.filter-images div.thre table:not(.resnew) {
                 }
                 if ((_a = a.closest("table")) === null || _a === void 0 ? void 0 : _a.is(".resnew")) {
                     div.addClass("resnew");
+                }
+                if (savedList.has(anchor.href)) {
+                    div.addClass("saved");
                 }
                 return div;
             }

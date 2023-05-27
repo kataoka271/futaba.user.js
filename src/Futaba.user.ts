@@ -539,6 +539,37 @@
     const q_maxres = "div.thre > span.maxres"; // tree view recovery point
     const q_contres = "#contres > a";
 
+    class SavedList {
+      saved: { [url: string]: number };
+
+      constructor() {
+        this.saved = JSON.parse(GM_getValue("saved", "{}"));
+        const now = Date.now();
+        for (const url in this.saved) {
+          if (this.saved[url] < now) {
+            delete this.saved[url];
+          }
+        }
+        this.save();
+        console.log("SavedList:", this.saved);
+      }
+
+      save(): void {
+        GM_setValue("saved", JSON.stringify(this.saved));
+      }
+
+      has(url: string): boolean {
+        return url in this.saved;
+      }
+
+      add(url: string): void {
+        this.saved[url] = Date.now() + 86400000; // 1 day
+        this.save();
+      }
+    }
+
+    const savedList = new SavedList();
+
     class ImageViewer {
       images: JQuery<HTMLElement>;
       thumbs: JQuery<HTMLElement>;
@@ -633,12 +664,18 @@
           if (anchor.closest("table")?.classList.contains("resnew")) {
             div.addClass("resnew");
           }
+          if (savedList.has(anchor.href)) {
+            div.addClass("saved");
+          }
           return div.get(0);
         });
         this.thumbs = anchors.map((i, anchor) => {
-          const img = $('<img loading="lazy">').attr("src", $("img", anchor).attr("src") ?? anchor.href);
+          const img = $("<div>").append($('<img loading="lazy">').attr("src", $("img", anchor).attr("src") ?? anchor.href));
           if (anchor.closest("table")?.classList.contains("resnew")) {
             img.addClass("resnew");
+          }
+          if (savedList.has(anchor.href)) {
+            img.addClass("saved");
           }
           return img.get(0);
         });
@@ -669,7 +706,9 @@
       }
 
       save(): void {
-        const url = this.images.filter(":visible").eq(this.index).find("a").attr("href");
+        const image = this.images.filter(":visible").eq(this.index);
+        const thumb = this.thumbs.filter(":visible").eq(this.index);
+        const url = image.find("a").attr("href");
         if (url == null) {
           return;
         }
@@ -683,6 +722,11 @@
           headers: { Referer: location.href },
           saveAs: false,
           onerror: (e) => console.log(e),
+          onload: () => {
+            savedList.add(url);
+            image.addClass("saved");
+            thumb.addClass("saved");
+          },
         });
       }
 
@@ -769,6 +813,9 @@
         }
         if (a.closest("table")?.is(".resnew")) {
           div.addClass("resnew");
+        }
+        if (savedList.has(anchor.href)) {
+          div.addClass("saved");
         }
         return div;
       }

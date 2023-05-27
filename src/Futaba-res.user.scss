@@ -73,6 +73,19 @@ body.filter-images {
     }
   }
 }
+@mixin saved-label($font-size) {
+  color: rgb(19, 146, 19);
+  font-weight: bold;
+  font-size: $font-size;
+  content: "\u2714";
+  position: absolute;
+  left: 0;
+  top: 0;
+  background-color: rgb(0, 80, 0);
+  width: 1.2em;
+  height: 1.2em;
+  opacity: 0.8;
+}
 #gallery {
   position: fixed;
   background-color: rgba(0, 0, 0, 0.9);
@@ -121,6 +134,10 @@ body.filter-images {
         object-fit: contain;
         object-position: 50% 50%;
       }
+    }
+
+    &.saved > a::before {
+      @include saved-label(14pt);
     }
 
     &.movie {
@@ -179,11 +196,18 @@ body.filter-images {
           max-height: calc(100vh - 50px) !important;
         }
       }
+      > a {
+        display: inline-block;
+        position: relative;
+      }
       > a > img {
         object-fit: contain;
         object-position: center;
         max-width: 100%;
         max-height: calc(100vh - 50px);
+      }
+      &.saved > a::before {
+        @include saved-label(14pt);
       }
     }
   }
@@ -198,19 +222,27 @@ body.filter-images {
     left: 0;
     bottom: 0;
 
-    > img {
+    > div {
       background-color: black;
       flex-basis: 50px;
       flex-shrink: 0;
-      object-fit: scale-down;
-      object-position: center;
       width: 50px;
       height: 50px;
       border: 2px solid rgba(0, 0, 0, 0.9);
       box-sizing: border-box;
+      position: relative;
 
+      > img {
+        object-fit: scale-down;
+        object-position: center;
+        width: 100%;
+        height: 100%;
+      }
       &.active {
         border: 2px solid rgb(200, 0, 0);
+      }
+      &.saved::before {
+        @include saved-label(11pt);
       }
     }
   }
