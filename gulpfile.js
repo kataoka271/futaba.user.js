@@ -7,8 +7,7 @@ const sass = require("gulp-sass")(require("node-sass"));
 const tsProject = ts.createProject("tsconfig.json");
 
 function build_ts() {
-  return tsProject
-    .src()
+  return src("src/Futaba.user.ts")
     .pipe(fileinclude())
     .pipe(tsProject())
     .js.pipe(lec({ eolc: "CRLF" }))
@@ -18,7 +17,7 @@ function build_ts() {
 function build_sass() {
   return src("src/**/*.scss")
     .pipe(sass({ outputStyle: "expanded" }))
-    .pipe(dest("dist/css"));
+    .pipe(dest("build/css"));
 }
 
 exports.default = series(build_sass, build_ts);

@@ -17,24 +17,24 @@
 // @grant        GM_download
 // ==/UserScript==
 (function () {
-    const getKey = (domain, href) => {
+    function getKey(domain, href) {
         const mo = /([0-9]+)\.htm$/.exec(href);
         if (mo != null) {
             return domain + "#" + mo[1];
         }
-    };
-    const loadCatalog = () => {
+    }
+    function loadCatalog() {
         return JSON.parse(GM_getValue("cat", "{}"));
-    };
-    const saveCatalog = (cat, update) => {
+    }
+    function saveCatalog(cat, update) {
         GM_setValue("cat", JSON.stringify(cat));
         GM_setValue("update", update !== null && update !== void 0 ? update : "0");
-    };
-    const readClearUpdateFlag = () => {
+    }
+    function readClearUpdateFlag() {
         const update = GM_getValue("update", "0");
         GM_setValue("update", "0");
         return update;
-    };
+    }
     class AutoUpdateSelection {
         constructor(handler, ...options) {
             this._timer = 0;
@@ -81,7 +81,7 @@
             this._timer = setTimeout(() => this.onTimer(), value * 1000);
         }
     }
-    const onCatMode = (domain) => {
+    function onCatMode(domain) {
         GM_addStyle(`\
 body > a.select, body > b > a.select {
   font-weight: bold;
@@ -521,8 +521,8 @@ body > b {
             }
         }
         new CatMode(domain);
-    };
-    const onResMode = (domain) => {
+    }
+    function onResMode(domain) {
         GM_addStyle(`\
 table.resnew > tbody > tr > td.rtd {
   background-color: #fce0d6;
@@ -1540,7 +1540,7 @@ body.filter-images div.thre table:not(.resnew) {
             return;
         }
         new ResMode(key);
-    };
+    }
     GM_registerMenuCommand("履歴削除", () => {
         GM_deleteValue("cat");
         GM_deleteValue("update");
