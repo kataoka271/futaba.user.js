@@ -716,6 +716,16 @@
         if (name == null) {
           return;
         }
+        $('<div id="saving-popup">Saving...</div>')
+          .appendTo("body")
+          .fadeIn("fast")
+          .delay(800)
+          .fadeOut({
+            duration: "slow",
+            complete: function () {
+              this.parentNode?.removeChild(this);
+            },
+          });
         GM_download({
           url: url,
           name: name,

@@ -272,3 +272,14 @@ body.filter-images {
     border: 1px dashed rgb(150, 0, 0);
   }
 }
+#saving-popup {
+  background-color: rgb(20, 20, 20);
+  color: rgb(150, 150, 150);
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  z-index: 2000;
+  padding: 0.5em;
+  opacity: 0.8;
+}

@@ -833,6 +833,18 @@ body.filter-images div.thre table:not(.resnew) {
   border: 1px dashed #960000;
 }
 
+#saving-popup {
+  background-color: #141414;
+  color: #969696;
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  z-index: 2000;
+  padding: 0.5em;
+  opacity: 0.8;
+}
+
 `);
         console.log("res-mode is running:", domain);
         const q_thre = "div.thre";
@@ -1012,6 +1024,17 @@ body.filter-images div.thre table:not(.resnew) {
                 if (name == null) {
                     return;
                 }
+                $('<div id="saving-popup">Saving...</div>')
+                    .appendTo("body")
+                    .fadeIn("fast")
+                    .delay(800)
+                    .fadeOut({
+                    duration: "slow",
+                    complete: function () {
+                        var _a;
+                        (_a = this.parentNode) === null || _a === void 0 ? void 0 : _a.removeChild(this);
+                    },
+                });
                 GM_download({
                     url: url,
                     name: name,
