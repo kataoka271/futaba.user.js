@@ -601,7 +601,15 @@ function onResMode(domain: string): void {
       const treeview = new TreeView();
       const command = new Command(gallery, treeview);
       $("body").append(this.autoScr.status());
-      $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
+      const gotoBtn = $("<div id='goto-btn'>").append($("<a>▼新</a>").on("click", () => {
+        this.setScrollPositionFromResNum($(q_res_notnew).length + 1);
+      }), $("<a>▼読</a>").on("click", () => {
+        const offset = $("#readmarker").offset();
+        if (offset != null) {
+          window.scrollTo(0, offset.top);
+        }
+      }));
+      $("body").append($('<div id="commands">').append(gotoBtn, command.buttons(), " ", select.get()));
       $(window).on("keydown", (e) => this.onHotkey(e));
       $(window).on("unload", () => this.onUnload());
       $(q_thre).on("mouseover", (e) => this.onPlayVideo(e));

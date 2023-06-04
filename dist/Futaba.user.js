@@ -545,7 +545,7 @@ body.filter-resnew #image-view > .image-thumbs > img:not(.resnew) {
   display: none;
 }
 
-body.filter-images div.thre table:not(.resnew) {
+body.filter-images div.thre table:not(.resimg) {
   display: none;
 }
 
@@ -562,47 +562,65 @@ body.filter-images div.thre table:not(.resnew) {
   border-radius: 2px;
 }
 
-#auto-update-interval {
-  display: inline-block;
-}
-
 #commands {
   position: fixed;
   bottom: 10px;
   right: 10px;
   z-index: 1000;
+  text-align: center;
 }
 
-#commands a {
+#commands > a {
   background-color: #c8c8c8;
   border: 2px outset #c8c8c8;
   color: #646464;
-  font-size: 90%;
-  padding: 0.2em 0.85em;
   cursor: pointer;
-  display: inline-block;
+  display: block;
 }
 
-#commands a:hover {
+#commands > a:hover {
   color: #c80000;
 }
 
-#commands a.enable {
+#commands > a.enable {
   background-color: #969696;
   border-style: inset;
   color: #c80000;
 }
 
-#commands a.enable:hover {
+#commands > a.enable:hover {
   color: #646464;
 }
 
-#commands a.cornar-first {
-  border-radius: 5px / 20% 0 0 20%;
+#commands > a.cornar-first {
+  border-radius: 5px / 20% 20% 0 0;
 }
 
-#commands a.cornar-last {
-  border-radius: 5px / 0 20% 20% 0;
+#commands > a.cornar-last {
+  border-radius: 5px / 0 0 20% 20%;
+}
+
+#commands #auto-update-interval {
+  display: block;
+  width: 100px;
+  height: 25px;
+}
+
+#commands #goto-btn {
+  padding: 2px;
+}
+
+#commands #goto-btn > a {
+  background-color: #e6bebe;
+  color: #960000;
+  cursor: pointer;
+  display: inline-block;
+  font-weight: bold;
+  opacity: 0.8;
+}
+
+#commands #goto-btn > a:hover {
+  color: #c80000;
 }
 
 #gallery {
@@ -1391,7 +1409,15 @@ body.filter-images div.thre table:not(.resnew) {
                 const treeview = new TreeView();
                 const command = new Command(gallery, treeview);
                 $("body").append(this.autoScr.status());
-                $("body").append($('<div id="commands">').append(command.buttons(), " ", select.get()));
+                const gotoBtn = $("<div id='goto-btn'>").append($("<a>▼新</a>").on("click", () => {
+                    this.setScrollPositionFromResNum($(q_res_notnew).length + 1);
+                }), $("<a>▼読</a>").on("click", () => {
+                    const offset = $("#readmarker").offset();
+                    if (offset != null) {
+                        window.scrollTo(0, offset.top);
+                    }
+                }));
+                $("body").append($('<div id="commands">').append(gotoBtn, command.buttons(), " ", select.get()));
                 $(window).on("keydown", (e) => this.onHotkey(e));
                 $(window).on("unload", () => this.onUnload());
                 $(q_thre).on("mouseover", (e) => this.onPlayVideo(e));

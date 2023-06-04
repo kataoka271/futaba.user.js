@@ -20,7 +20,7 @@ body.filter-resnew {
   }
 }
 body.filter-images {
-  div.thre table:not(.resnew) {
+  div.thre table:not(.resimg) {
     display: none;
   }
 }
@@ -36,23 +36,19 @@ body.filter-images {
   padding: 5px 10px;
   border-radius: 2px;
 }
-#auto-update-interval {
-  display: inline-block;
-}
 #commands {
   position: fixed;
   bottom: 10px;
   right: 10px;
   z-index: 1000;
+  text-align: center;
 
-  a {
+  > a {
     background-color: rgb(200, 200, 200);
     border: 2px outset rgb(200, 200, 200);
     color: rgb(100, 100, 100);
-    font-size: 90%;
-    padding: 0.2em 0.85em;
     cursor: pointer;
-    display: inline-block;
+    display: block;
 
     &:hover {
       color: rgb(200, 0, 0);
@@ -66,10 +62,33 @@ body.filter-images {
       }
     }
     &.cornar-first {
-      border-radius: 5px / 20% 0 0 20%;
+      border-radius: 5px / 20% 20% 0 0;
     }
     &.cornar-last {
-      border-radius: 5px / 0 20% 20% 0;
+      border-radius: 5px / 0 0 20% 20%;
+    }
+  }
+
+  #auto-update-interval {
+    display: block;
+    width: 100px;
+    height: 25px;
+  }
+
+  #goto-btn {
+    padding: 2px;
+
+    > a {
+      background-color: rgb(230, 190, 190);
+      color: rgb(150, 0, 0);
+      cursor: pointer;
+      display: inline-block;
+      font-weight: bold;
+      opacity: 0.8;
+
+      &:hover {
+        color: rgb(200, 0, 0);
+      }
     }
   }
 }
