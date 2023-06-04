@@ -28,12 +28,22 @@
     }
     function saveCatalog(cat, update) {
         GM_setValue("cat", JSON.stringify(cat));
-        GM_setValue("update", update !== null && update !== void 0 ? update : "0");
+        if (update) {
+            GM_setValue("update", parseInt(GM_getValue("instance", "1")).toString());
+        }
+        else {
+            GM_setValue("update", "0");
+        }
     }
     function readClearUpdateFlag() {
-        const update = GM_getValue("update", "0");
-        GM_setValue("update", "0");
-        return update;
+        const update = parseInt(GM_getValue("update", "0"));
+        if (update > 0) {
+            GM_setValue("update", (update - 1).toString());
+            return true;
+        }
+        else {
+            return false;
+        }
     }
     class AutoUpdateSelection {
         constructor(handler, ...options) {
@@ -168,7 +178,9 @@ body > b {
 }
 
 `);
-        console.log("cat-mode is running:", domain);
+        const instance = parseInt(GM_getValue("instance", "0")) + 1;
+        GM_setValue("instance", instance.toString());
+        console.log("cat-mode is running:", { domain: domain, instance: instance });
         const q_cattable = "#cattable";
         const q_cattable_cells = "#cattable div.cell";
         function urlRequest(option) {
@@ -501,6 +513,7 @@ body > b {
             }
             onUnload() {
                 this.table.save();
+                GM_setValue("instance", (parseInt(GM_getValue("instance", "1")) - 1).toString());
             }
             onKeyDown(e) {
                 var _a;
@@ -515,7 +528,7 @@ body > b {
                 }
             }
             onTimer() {
-                if (readClearUpdateFlag() === "1") {
+                if (readClearUpdateFlag()) {
                     this.table.update();
                 }
             }
@@ -1341,7 +1354,7 @@ body.filter-images div.thre table:not(.resimg) {
                     }
                     const newcat = loadCatalog();
                     newcat[this._key] = item;
-                    saveCatalog(newcat, "1");
+                    saveCatalog(newcat, true);
                 }
                 else if (retry > 0) {
                     setTimeout(this.onTimer.bind(this), 100, item, retry - 1, param);
@@ -1397,7 +1410,7 @@ body.filter-images div.thre table:not(.resimg) {
                     this.setScrollPositionFromResNum(offset);
                     this.insertReadMarker(offset);
                 }
-                saveCatalog(cat, "1");
+                saveCatalog(cat, true);
                 this.key = key;
                 // install components
                 this.watcher = new ReloadWatcher(key);
@@ -1505,7 +1518,7 @@ body.filter-images div.thre table:not(.resimg) {
             onUnload() {
                 const newcat = loadCatalog();
                 newcat[this.key].offset = this.getResNumFromScrollPosition();
-                saveCatalog(newcat, "1");
+                saveCatalog(newcat, true);
             }
             onUpdate() {
                 this.watcher.trigger({ preserve: true });

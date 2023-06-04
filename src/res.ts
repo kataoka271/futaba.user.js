@@ -523,7 +523,7 @@ function onResMode(domain: string): void {
         }
         const newcat = loadCatalog();
         newcat[this._key] = item;
-        saveCatalog(newcat, "1");
+        saveCatalog(newcat, true);
       } else if (retry > 0) {
         setTimeout(this.onTimer.bind(this), 100, item, retry - 1, param);
       }
@@ -583,7 +583,7 @@ function onResMode(domain: string): void {
         this.setScrollPositionFromResNum(offset);
         this.insertReadMarker(offset);
       }
-      saveCatalog(cat, "1");
+      saveCatalog(cat, true);
       this.key = key;
       // install components
       this.watcher = new ReloadWatcher(key);
@@ -695,7 +695,7 @@ function onResMode(domain: string): void {
     onUnload(): void {
       const newcat = loadCatalog();
       newcat[this.key].offset = this.getResNumFromScrollPosition();
-      saveCatalog(newcat, "1");
+      saveCatalog(newcat, true);
     }
 
     onUpdate(): void {

@@ -3,7 +3,10 @@ function onCatMode(domain: string): void {
 @@include("../build/css/cat.css")
 `);
 
-  console.log("cat-mode is running:", domain);
+  const instance = parseInt(GM_getValue("instance", "0")) + 1;
+  GM_setValue("instance", instance.toString());
+
+  console.log("cat-mode is running:", {domain: domain, instance: instance});
 
   const q_cattable = "#cattable";
   const q_cattable_cells = "#cattable div.cell";
@@ -52,7 +55,7 @@ function onCatMode(domain: string): void {
       this._cat = cat;
     }
 
-    save(update?: string): void {
+    save(update?: boolean): void {
       saveCatalog(this._cat, update);
     }
 
@@ -383,6 +386,7 @@ function onCatMode(domain: string): void {
 
     onUnload(): void {
       this.table.save();
+      GM_setValue("instance", (parseInt(GM_getValue("instance", "1")) - 1).toString());
     }
 
     onKeyDown(e: JQuery.TriggeredEvent): void {
@@ -397,7 +401,7 @@ function onCatMode(domain: string): void {
     }
 
     onTimer(): void {
-      if (readClearUpdateFlag() === "1") {
+      if (readClearUpdateFlag()) {
         this.table.update();
       }
     }

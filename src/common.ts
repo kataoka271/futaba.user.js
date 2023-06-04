@@ -22,15 +22,23 @@ function loadCatalog(): Catalog {
   return JSON.parse(GM_getValue("cat", "{}"));
 }
 
-function saveCatalog(cat: Catalog, update?: string): void {
+function saveCatalog(cat: Catalog, update?: boolean): void {
   GM_setValue("cat", JSON.stringify(cat));
-  GM_setValue("update", update ?? "0");
+  if (update) {
+    GM_setValue("update", parseInt(GM_getValue("instance", "1")).toString());
+  } else {
+    GM_setValue("update", "0");
+  }
 }
 
-function readClearUpdateFlag(): string {
-  const update = GM_getValue("update", "0");
-  GM_setValue("update", "0");
-  return update;
+function readClearUpdateFlag(): boolean {
+  const update = parseInt(GM_getValue("update", "0"));
+  if (update > 0) {
+    GM_setValue("update", (update - 1).toString());
+    return true;
+  } else {
+    return false;
+  }
 }
 
 interface AutoUpdateEventHandler {
