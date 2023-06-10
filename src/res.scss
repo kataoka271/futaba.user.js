@@ -39,7 +39,7 @@ body.filter-images {
 #commands {
   position: fixed;
   bottom: 10px;
-  right: 10px;
+  left: calc(100vw - 130px);
   z-index: 1000;
   text-align: center;
 
@@ -291,14 +291,30 @@ body.filter-images {
     border: 1px dashed rgb(150, 0, 0);
   }
 }
-#saving-popup {
+#downloading-popup {
   background-color: rgb(20, 20, 20);
   color: rgb(150, 150, 150);
   position: fixed;
+  display: table;
+  width: 10em;
+  height: 3em;
+  margin: auto;
+  top: 0;
+  left: 0;
   bottom: 0;
   right: 0;
   text-align: center;
   z-index: 2000;
   padding: 0.5em;
   opacity: 0.8;
+
+  > span {
+    display: table-cell;
+    vertical-align: middle;
+  }
+}
+body.image-view-mode {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }

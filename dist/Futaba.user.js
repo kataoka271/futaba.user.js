@@ -578,7 +578,7 @@ body.filter-images div.thre table:not(.resimg) {
 #commands {
   position: fixed;
   bottom: 10px;
-  right: 10px;
+  left: calc(100vw - 130px);
   z-index: 1000;
   text-align: center;
 }
@@ -864,16 +864,33 @@ body.filter-images div.thre table:not(.resimg) {
   border: 1px dashed #960000;
 }
 
-#saving-popup {
+#downloading-popup {
   background-color: #141414;
   color: #969696;
   position: fixed;
+  display: table;
+  width: 10em;
+  height: 3em;
+  margin: auto;
+  top: 0;
+  left: 0;
   bottom: 0;
   right: 0;
   text-align: center;
   z-index: 2000;
   padding: 0.5em;
   opacity: 0.8;
+}
+
+#downloading-popup > span {
+  display: table-cell;
+  vertical-align: middle;
+}
+
+body.image-view-mode {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
 }
 
 `);
@@ -1043,6 +1060,7 @@ body.filter-images div.thre table:not(.resimg) {
                 setTimeout(() => {
                     $("#image-view > .image-slider").css("transition", "");
                 }, 100);
+                $("body").addClass("image-view-mode");
             }
             save() {
                 const image = this.images.filter(":visible").eq(this.index);
@@ -1055,7 +1073,7 @@ body.filter-images div.thre table:not(.resimg) {
                 if (name == null) {
                     return;
                 }
-                $('<div id="saving-popup">Saving...</div>')
+                $('<div id="downloading-popup"><span>Downloading ...</span></div>')
                     .appendTo("body")
                     .fadeIn("fast")
                     .delay(800)
@@ -1082,6 +1100,7 @@ body.filter-images div.thre table:not(.resimg) {
             destroy() {
                 $("#gallery").show().trigger("focus");
                 $("#image-view").remove();
+                $("body").removeClass("image-view-mode");
             }
         }
         class Gallery {
@@ -1100,6 +1119,7 @@ body.filter-images div.thre table:not(.resimg) {
                     .append(anchors.map((i, e) => this.make(e).get()))
                     .appendTo("body")
                     .trigger("focus");
+                $("body").addClass("image-view-mode");
             }
             onClose(e) {
                 this.destroy();
@@ -1169,6 +1189,7 @@ body.filter-images div.thre table:not(.resimg) {
                 $("#gallery-button").removeClass("enable");
                 $("#gallery").remove();
                 this.imageViewer.destroy();
+                $("body").removeClass("image-view-mode");
             }
         }
         class TreeView {

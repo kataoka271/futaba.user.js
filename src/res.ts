@@ -179,6 +179,7 @@ function onResMode(domain: string): void {
       setTimeout(() => {
         $("#image-view > .image-slider").css("transition", "");
       }, 100);
+      $("body").addClass("image-view-mode");
     }
 
     save(): void {
@@ -192,7 +193,7 @@ function onResMode(domain: string): void {
       if (name == null) {
         return;
       }
-      $('<div id="saving-popup">Saving...</div>')
+      $('<div id="downloading-popup"><span>Downloading ...</span></div>')
         .appendTo("body")
         .fadeIn("fast")
         .delay(800)
@@ -219,6 +220,7 @@ function onResMode(domain: string): void {
     destroy(): void {
       $("#gallery").show().trigger("focus");
       $("#image-view").remove();
+      $("body").removeClass("image-view-mode");
     }
   }
 
@@ -241,6 +243,7 @@ function onResMode(domain: string): void {
         .append(anchors.map((i, e) => this.make(e).get()))
         .appendTo("body")
         .trigger("focus");
+      $("body").addClass("image-view-mode");
     }
 
     onClose(e: JQuery.TriggeredEvent): void {
@@ -310,6 +313,7 @@ function onResMode(domain: string): void {
       $("#gallery-button").removeClass("enable");
       $("#gallery").remove();
       this.imageViewer.destroy();
+      $("body").removeClass("image-view-mode");
     }
   }
 
