@@ -7,7 +7,7 @@ function main(): void {
   const mo = /^https?:\/\/(\w+)\./.exec(location.href);
   const domain: string = mo == null ? "" : mo[1];
 
-  if (/futaba\.php\?mode=cat/.test(location.href)) {
+  if (/futaba\.php\?mode=cat\b/.test(location.href)) {
     onCatMode(domain);
   } else {
     onResMode(domain);
