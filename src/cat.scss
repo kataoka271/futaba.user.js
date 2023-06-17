@@ -1,3 +1,6 @@
+:root {
+  --table-columns: 100;
+}
 body {
   > a.select, > b > a.select {
     font-weight: bold;
@@ -14,6 +17,7 @@ body {
   align-items: stretch;
   justify-content: center;
   margin: auto;
+  width: calc(var(--table-columns) * 67px);
 
   > div.cell {
     border: 1px solid #800000;
@@ -27,6 +31,8 @@ body {
     flex-grow: 0;
     flex-shrink: 0;
     flex-basis: 65px;
+    box-sizing: border-box;
+    width: 65px;
   }
 }
 .resnum {

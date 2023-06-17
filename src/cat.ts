@@ -6,7 +6,7 @@ function onCatMode(domain: string): void {
   const instance = parseInt(GM_getValue("instance", "0")) + 1;
   GM_setValue("instance", instance.toString());
 
-  console.log("cat-mode is running:", {domain: domain, instance: instance});
+  console.log("cat-mode is running:", { domain: domain, instance: instance });
 
   const q_cattable = "#cattable";
   const q_cattable_cells = "#cattable div.cell";
@@ -259,14 +259,27 @@ function onCatMode(domain: string): void {
     }
   }
 
-  function createColumnAdjust(): JQuery<HTMLElement> {
-    $("#cattable, #findresult").width("100%");
-    return $('<input id="column-adjust" type="number" value="100" step="10" max="100" min="0">')
+  function columnAdjuster(): JQuery<HTMLElement> {
+    const CELL_WIDTH = 67;  // 65px (border-box width) + 2px (margin)
+    const re = /\bcxyl=(\d+)(x\d+x\d+x\d+x\d+)\b/;
+    const mo = re.exec(document.cookie);
+    const initValue = mo != null ? mo[1] : "100";
+    return $(`<input id="column-adjust" type="number" value="${initValue}" step="1" max="100" min="1">`)
       .on("input", function () {
         if (!(this instanceof HTMLInputElement)) {
           return;
         }
-        return $("#cattable, #findresult").width(`${this.value}%`);
+        const input = parseInt(this.value);
+        const columns = Math.min(Math.floor(document.body.clientWidth / CELL_WIDTH), input);
+        if (input !== columns) {
+          this.value = columns.toString();
+        }
+        const mo = re.exec(document.cookie);
+        if (mo != null) {
+          document.cookie.split("; ").filter(e => !e.startsWith("cxyl=")).forEach(e => { document.cookie = e; });
+          document.cookie = `cxyl=${columns}${mo[2]}`;
+        }
+        document.documentElement.style.setProperty("--table-columns", columns + "");
       })
       .on("wheel", function (e: JQuery.TriggeredEvent) {
         if (!(this instanceof HTMLInputElement && e.originalEvent instanceof WheelEvent)) {
@@ -280,7 +293,7 @@ function onCatMode(domain: string): void {
         e.stopPropagation();
         e.preventDefault();
         $(this).trigger("input");
-      });
+      }).trigger("input");
   }
 
   class CatMode {
@@ -299,7 +312,7 @@ function onCatMode(domain: string): void {
       const result = new FindResult();
       const table = new CatTable(finder, result, domain);
       const select = new AutoUpdateSelection(this, ["OFF", 0], ["30sec", 30], ["1min", 60], ["3min", 180]);
-      const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get(), " ", createColumnAdjust());
+      const controller = $('<div id="controller">').append(finder, " ", button, " ", select.get(), " ", columnAdjuster());
 
       $(q_cattable).before($("<p>"), controller, $("<p>"), result.get(), $("<p>"));
 
@@ -321,7 +334,7 @@ function onCatMode(domain: string): void {
               .append($('<div class="inner-cell">').append($(e).contents()))
               .get()
           )
-        ).width($("input#column-adjust").val() + "%")
+        )
       );
     }
 
