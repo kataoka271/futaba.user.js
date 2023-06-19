@@ -71,9 +71,12 @@ function onResMode(domain: string): void {
         image.find("a > img").trigger("click");
       }
       $("#image-view > .image-number").text(`${i + 1}/${visible_images.length}`);
-      const offset = 50 * i - (window.innerWidth - 50) / 2;
+      const offset = 50 * (i - Math.floor(window.innerWidth / 50 / 2) + 1);
+      const m = 50 * (visible_images.length - Math.floor(window.innerWidth / 50) + 3);
       if (offset < 0) {
         $("#image-view > .image-thumbs").css("transform", "translate(0)");
+      } else if (offset > m) {
+        $("#image-view > .image-thumbs").css("transform", `translate(-${m}px)`);
       } else {
         $("#image-view > .image-thumbs").css("transform", `translate(-${offset}px)`);
       }
